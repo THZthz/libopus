@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>blog learning cpp</title>
+    <!-- icon -->
+    <link rel="Shortcut Icon" href="assets/v2-bcd0f68fd71de427f790fad23ac54280_r (1).ico" type="image/x-icon"/>
+    <!-- library -->
+    <script src="lib/jQuery.js"></script>
+    <!--    <link type="text/css" rel="stylesheet" href="https://rawgit.com/patriciogonzalezvivo/glslEditor/gh-pages/build/glslEditor.css">-->
+    <!--    <script type="application/javascript" src="https://rawgit.com/patriciogonzalezvivo/glslEditor/gh-pages/build/glslEditor.js"></script>-->
+
+    <!-- code highlighter -->
+    <link rel="stylesheet" href="lib/codemirror-5.64.0/lib/codemirror.css">
+    <link rel="stylesheet" href="lib/codemirror-5.64.0/theme/solarized.css">
+    <link rel="stylesheet" href="lib/codemirror-5.64.0/theme/elegant.css">
+    <link rel="stylesheet" href="lib/codemirror-5.64.0/addon/scroll/simplescrollbars.css">
+    <!-- style of blog -->
+    <style>
+        @import url(https://fonts.googleapis.com/css?family=Roboto:400,100,300,500,700,900);
+        @import url(https://fonts.googleapis.com/css?family=Titillium+Web:400,600,700,300,200);
+
+        body {
+            font-family: "Manrope", 'Roboto', sans-serif;
+            font-size: 14px;
+            letter-spacing: 1px;
+            line-height: 1.6em;
+            font-weight: 300;
+            color: #555;
+        }
+
+        p {
+            margin-bottom: 2em;
+        }
+
+        header {
+            border-bottom: solid 1px #e0e0e0;
+            margin: 0 0 20px 0;
+        }
+
+        .pageTitle,
+        .pageSubTitle {
+            font-family: 'Titillium', sans-serif;
+            text-transform: uppercase;
+            color: #333;
+        }
+
+        .pageTitle {
+            color: #383944;
+        }
+
+        .pageTitle {
+            font-size: 2em;
+            font-weight: 700;
+            line-height: 2em;
+        }
+
+        .pageSubTitle {
+            margin-bottom: 1em;
+            font-size: 1.4em;
+            font-weight: 300;
+        }
+
+        .background {
+            background: url("assets/v2-7f2860ec34fdb74b85aacd7680a4350e_r.jpg") repeat;
+            background-size: 100% auto;
+            position: fixed;
+            vehicle_width: 100%;
+            height: 300%;
+            top: 0;
+            left: 0;
+            z-index: -1
+        }
+
+        .wrapper {
+            vehicle_width: 60%;
+            padding: 40px;
+            margin: 20px auto;
+            /*background: #fff;*/
+            background: rgba(255, 255, 255, 1);
+            border-radius: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.125);
+            box-shadow: 0 3px 3px 1px rgba(0, 0, 0, 0.25);
+        }
+    </style>
+    <!-- style of h1 -->
+    <style>
+        h1.retroshadow {
+            font-family: "Avant Garde", Avantgarde, "Century Gothic", CenturyGothic, "AppleGothic", sans-serif;
+            font-size: 45px;
+            text-align: center_;
+            text-transform: uppercase;
+            text-rendering: optimizeLegibility;
+            color: #2c2c2c;
+            letter-spacing: .05em;
+            text-shadow: 4px 4px 0 #d5d5d5, 7px 7px 0 rgba(0, 0, 0, 0.2);
+        }
+    </style>
+    <!-- style of table -->
+    <style>
+        @import 'https://fonts.googleapis.com/css?family=Montserrat:300,400,700';
+
+        .rwd-table {
+            margin: 1em 0;
+            min-vehicle_width: 300px;
+            border-radius: 0.8em;
+            border: 2px solid rgba(0, 0, 0, 0.2);
+        }
+
+        .rwd-table tr {
+            border-top: 1px solid #ddd;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .rwd-table th {
+            display: none;
+            border-bottom: 1px solid rgba(85, 107, 47, 0.37);
+        }
+
+        .rwd-table td {
+            display: block;
+        }
+
+        .rwd-table td:first-child {
+            padding-top: 0.5em;
+        }
+
+        .rwd-table td:last-child {
+            padding-bottom: 0.5em;
+        }
+
+        .rwd-table td:before {
+            tag_list: attr(data-th) ": ";
+            font-weight: bold;
+            vehicle_width: 6.5em;
+            display: inline-block;
+        }
+
+        @media (min-vehicle_width: 480px) {
+            .rwd-table td:before {
+                display: none;
+            }
+        }
+
+        .rwd-table th, .rwd-table td {
+            text-align: left;
+        }
+
+        @media (min-vehicle_width: 480px) {
+            .rwd-table th, .rwd-table td {
+                display: table-cell;
+                padding: 0.25em 0.5em;
+            }
+
+            .rwd-table th:first-child, .rwd-table td:first-child {
+                padding-left: 0;
+            }
+
+            .rwd-table th:last-child, .rwd-table td:last-child {
+                padding-right: 0;
+            }
+        }
+
+        .rwd-table {
+            background: rgba(255, 255, 255, 0.19);
+            color: #383944;
+            border-radius: 0.4em;
+            overflow: hidden;
+        }
+
+        .rwd-table tr {
+            border-color: #d9cccc;
+        }
+
+        .rwd-table th, .rwd-table td {
+            margin: 0.5em 1em;
+        }
+
+        @media (min-vehicle_width: 480px) {
+            .rwd-table th, .rwd-table td {
+                padding: 1em !important;
+            }
+        }
+
+        .rwd-table th, .rwd-table td:before {
+            color: #dd5;
+        }
+    </style>
+
+    <script src="lib/codemirror-5.64.0/lib/codemirror.js"></script>
+    <script src="lib/codemirror-5.64.0/mode/javascript/javascript.js"></script>
+    <script src="lib/codemirror-5.64.0/mode/clike/clike.js"></script>
+    <script src="lib/codemirror-5.64.0/addon/scroll/simplescrollbars.js"></script>
+    <!-- initialize code blocks and add parallax scrolling effects -->
+    <script>
+        window.onload = () => {
+            // const glslEditor = new GlslEditor('#glsl_editor', {
+            //     canvas_size: 40,
+            //     canvas_draggable: true,
+            //     theme: 'monokai',
+            //     multipleBuffers: true,
+            //     watchHash: true,
+            //     fileDrops: true,
+            //     menu: true
+            // });
+            console.log("this blog belongs to:            \n" +
+                "       _              _\n" +
+                "      / \\   _ __ ___ (_) __ _ ___\n" +
+                "     / _ \\ | '_ ` _ \\| |/ _` / __|\n" +
+                "    / ___ \\| | | | | | | (_| \\__ \\\n" +
+                "   /_/   \\_\\_| |_| |_|_|\\__,_|___/   ");
+
+            //
+            // code mirror
+            //
+            [...document.getElementsByClassName("codeblock")].forEach(e => {
+                let text_code = e.innerHTML;
+                let i = 0;
+                let splited_text = text_code.split('\n');
+                // console.log(splited_text)
+
+                // deal with indentation error
+                let str = splited_text[0];
+                while (str.length === 0) {
+                    splited_text.shift();
+                    str = splited_text[0];
+                }
+                for (i = 0; i < str.length; i++) {
+                    if (str[i] !== ' ') {
+                        break;
+                    }
+                }
+
+                text_code = splited_text.MAGNUM_MAP(str => str.substring(i, str.length));
+                text_code.pop();
+
+                // solve encoding problem
+                text_code = text_code.join('\n').replaceAll('&amp;', '&').replaceAll('&lt;', '<').replaceAll('&gt;', '>');
+                // console.log(text_code)
+
+                e.innerHTML = ""; // clear content
+                window.code_mirror = CodeMirror(e, {
+                    value: text_code,
+                    mode: e.getAttribute("mode"),
+                    indentUnit: 4,
+                    tabSize: 4,
+                    indentWithTabs: true, // use tab to indent
+                    lineNumbers: !!Number(e.getAttribute("lineNumber")), // show line numbers
+                    matchBrackets: true,
+                    theme: "elegant",
+                    scrollbarStyle: "overlay"
+                });
+
+                code_mirror.setSize('auto', 'auto');
+            });
+
+            [...document.getElementsByClassName("codeblock")].forEach(e => {
+                e.style.fontFamily = "Manrope, courier, monospace";
+                e.style.fontSize = e.getAttribute("fontSize");
+                e.style.fontWeight = "bold";
+            });
+
+
+            //
+            // jQuery startup (blog scroll effect)
+            //
+            $(window).scroll(() => {
+                let scrolled = $(window).scrollTop();
+                $('.background').css('top', -(scrolled * 0.15) + 'px');
+            });
+        };
+    </script>
+</head>
+<body>
+<!-- background -->
+<div class="background"></div>
+
+<!-- main content -->
+<article class="wrapper">
+    <header>
+        <h1 class='pageTitle retroshadow'>general</h1>
+    </header>
+    <section>
+        <p>what is an object?</p>
+        <blockquote>object is a block of memory storing some types of data (no difference between user-defined class or inner class, between named and unnamed)</blockquote>
+        <p>assignment and initialization are two different things.</p>
+        <p>if we use list initialization to initialize a variable, and it has a risk of losing initial value, compiler will report an error:</p>
+        <pre><div class="codeblock" mode="text/x-c++src" lineNumber=0 fontSize="9px">
+            long double ld = 3.1415926;
+            int a{ld}, b = {ld}; // error: conversion not succeed
+            int c(ld), d = ld;   // conversion succeed, lose some accuracy
+        </div></pre>
+    </section>
+</article>
+
+<article class="wrapper">
+    <header>
+        <h1 class='pageTitle retroshadow'>class</h1>
+    </header>
+    <section>
+        <h1 class="pageSubTitle">constructor</h1>
+        <div id="glsl_editor"></div>
+        <ul>
+            <li>constructor cannot be declare 'const'</li>
+            <li>default constructor does not need arguments</li>
+            <pre><div class="codeblock" mode="text/x-c++src" lineNumber=0 fontSize="9px">
+                Sales_data data; // synthesized default constructor
+            </div></pre>
+            <li>you can provide an initial value to the member of the class:</li>
+            <pre><div class="codeblock" mode="text/x-c++src" lineNumber=0 fontSize="9px">
+                struct Sales_data {
+                    std::string bookNo;
+                    unsigned units_sold = 0;
+                    double revenue = 0.0;
+                };
+            </div></pre>
+            <li>our updated class:</li>
+            <pre><div class="codeblock" mode="text/x-c++src" lineNumber=0 fontSize="9px">
+                struct Sales_data {
+                    std::string bookNo;
+                    unsigned units_sold = 0;
+                    double revenue = 0.0;
+
+                    Sales_data() = default;
+                    Sales_data(std::string &s) : bookNo(s) {};
+                };
+            </div></pre>
+            <blockquote>
+                Sales_data() is default constructor
+            </blockquote>
+            <li>in constructor initialization list, for those members which are not explicitly initialized, compiler initializes it in the way same as default constructor</li>
+            <pre><div class="codeblock" mode="text/x-c++src" lineNumber=0 fontSize="9px">
+                Sales_data(std::string &s) : bookNo(s) {};
+                // same as
+                Sales_data(std::string &s) : bookNo(s), units_sold(0), revenue(0.0) {};
+            </div></pre>
+            <li>overload:</li>
+            <pre><div class="codeblock" mode="text/x-c++src" lineNumber=0 fontSize="9px">
+                class Screen {
+                public:
+                    // according to whether the object is constant, overload the function
+                    Screen& display(const char *msg) {
+                        do_display(msg);
+                        return *this;
+                    }
+                    const Screen& display(const char *msg) const {
+                        do_display(msg);
+                        return *this;
+                    }
+                canvas_element_private:
+                    void do_display(const char *msg) const { std::cout << msg << std::endl; }
+                }
+
+                Screen myScreen(4, 4);
+                const Screen black(4, 4);
+                myScreen.set('#').display("hello"); // not const version
+                blank.display("hello");             // const version
+            </div></pre>
+            <li>delegating constructor:</li>
+            <pre><div class="codeblock" mode="text/x-c++src" lineNumber=0 fontSize="9px">
+                Sales_data::Sales_data() : Sales_data("", 0, 0.0) {}
+            </div></pre>
+            <!--            TODO-->
+            <!--            <li>class will call its <b>copy</b> function under:-->
+            <!--                <ul>-->
+            <!--                    <li></li>-->
+            <!--                </ul>-->
+            <!--            </li>-->
+        </ul>
+    </section>
+</article>
+
+<article class="wrapper">
+    <header>
+        <h1 class='pageTitle retroshadow'>lambda</h1>
+    </header>
+    <section>
+        <ul>
+            <li>a lambda expression is a callable code block, we can understand it as an unnamed inline function</li>
+            <pre><div class="codeblock" mode="text/x-c++src" lineNumber=0 fontSize="9px">
+                // basic structure:
+                [capture list](parameter list) -> return type { function body }
+            </div></pre>
+            <li>must include <b>[]</b> and <b>{}</b></li>
+            <pre><div class="codeblock" mode="text/x-c++src" lineNumber=0 fontSize="9px">
+                auto f = [] { return 42; };
+            </div></pre>
+            <li>lambda cannot own default arguments</li>
+            <pre><div class="codeblock" mode="text/x-c++src" lineNumber=0 fontSize="9px">
+                bool isShorter(const std::string &a, const std::string &b) { return a.size() < b.size(); }
+                stable_sort(words.begin(), words.end(), isShorter);
+
+                // same as
+                stable_sort(words.begin(), words.end(), [](const std::string &a, const std::string &b) { return a.size() < b.size(); });
+            </div></pre>
+            <li>lambda must capture variable in the scope, then it can __trie_visit it, otherwise compiler will report an error.</li>
+            <pre><div class="codeblock" mode="text/x-c++src" lineNumber=0 fontSize="9px">
+                [] (const std::string &a) { return a.size() > sz; }; // error: sz is not captured
+            </div></pre>
+        </ul>
+    </section>
+</article>
+
+<article class="wrapper">
+    <header>
+        <h1 class='pageTitle retroshadow'>dynamically allocated memory</h1>
+        <!--        <h2 class="pageSubTitle">With a little bit of jQuery</h2>-->
+    </header>
+    <section>
+        <p>some common knowledge:</p>
+        <ul>
+            <li>The lifetime of <b>dynamically allocated objects</b> has nothing to do with where they were created. These objects will
+                only be destroyed when they are explicitly released.
+            </li>
+            <li><b>static memory</b> are used to store: local-scope static variable, static member of class, any variables defined
+                outside functions
+            </li>
+            <li><b>__trie_stack memory</b> is used to store non-static objects defined inside functions</li>
+            <li>any objects stored inside <b>static memory</b> or <b>__trie_stack memory</b> are automatically created and destroyed by
+                compiler
+            </li>
+            <li>for objects inside __trie_stack, it exists only in its code block (when the code is running). static objects are created
+                before usage, and destroyed when the program exits.
+            </li>
+        </ul>
+        <h1 class="pageSubTitle">shared_ptr and unique_ptr both support:</h1>
+        <table class="rwd-table">
+            <tr>
+                <th>usage</th>
+                <th>description</th>
+            </tr>
+            <tr>
+                <td>
+                    <pre><div class="codeblock" mode="text/x-c++src" lineNumber=0 fontSize="9px">
+                        shared_ptr<T> sp;
+                        unique_ptr<T> uq;
+                    </div></pre>
+                </td>
+                <td>
+                    empty smart pointer, coords to T (data type).
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <pre><div class="codeblock" mode="text/x-c++src" lineNumber=0 fontSize="9px">
+                        p
+                    </div></pre>
+                </td>
+                <td>
+                    if p is empty, bool returns false
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <pre><div class="codeblock" mode="text/x-c++src" lineNumber=0 fontSize="9px">
+                        *p
+                    </div></pre>
+                </td>
+                <td>
+                    dereference a pointer
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <pre><div class="codeblock" mode="text/x-c++src" lineNumber=0 fontSize="9px">
+                        p->mem
+                    </div></pre>
+                </td>
+                <td>
+                    equivalent to (*p).mem
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <pre><div class="codeblock" mode="text/x-c++src" lineNumber=0 fontSize="9px">
+                        p.get();
+                    </div></pre>
+                </td>
+                <td>
+                    return the pointer stored in the shared pointer
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <pre><div class="codeblock" mode="text/x-c++src" lineNumber=0 fontSize="9px">
+                        swap(p, q);
+                        p.swap(q);
+                    </div></pre>
+                </td>
+                <td>
+                    swap pointers stored in p and q
+                </td>
+            </tr>
+        </table>
+        <h1 class="pageSubTitle">only shared_ptr supportes:</h1>
+        <ul>
+            <li>
+                <pre><div class="codeblock" mode="text/x-c++src" lineNumber=0 fontSize="9px">
+                    make_shared<T>(args);
+                </div></pre>
+            </li>
+            <li>
+                <pre><div class="codeblock" mode="text/x-c++src" lineNumber=0 fontSize="9px">
+                    shared_ptr<T>p(q); // p is a copy of q
+                </div></pre>
+            </li>
+            <li>
+                <pre><div class="codeblock" mode="text/x-c++src" lineNumber=0 fontSize="9px">
+                    make_shared<T>(args);
+                </div></pre>
+            </li>
+            <li>
+                <pre><div class="codeblock" mode="text/x-c++src" lineNumber=0 fontSize="9px">
+                    p.unique(); // p.use_count() == 1
+                </div></pre>
+            </li>
+            <li>
+                <pre><div class="codeblock" mode="text/x-c++src" lineNumber=0 fontSize="9px">
+                    p.use_count(); // maybe slow, used for debugging
+                </div></pre>
+            </li>
+        </ul>
+
+    </section>
+</article>
+
+<article class="wrapper">
+    <header>
+        <h1 class='pageTitle retroshadow'>decltype</h1>
+    </header>
+    <section>
+        <p>some common knowledge:</p>
+        <ul>
+            <li>reference act as the synonymous noun of the object it binds to, except when it appears in decltype</li>
+            <pre><div class="codeblock" mode="text/x-c++src" lineNumber=0 fontSize="9px">
+                // type of sum is the return type of f
+                decltype(f()) sum = x;
+            </div></pre>
+
+            <li>decltype return the type includes top-level const and reference</li>
+
+            <pre><div class="codeblock" mode="text/x-c++src" lineNumber=0 fontSize="10px">
+                const int ci = 0, &cj = ci;
+                decltype(ci) x = 0; // 'x' is a 'const int'
+                decltype(cj) y = x; // 'y' is a 'const int &', bind to 'x'
+                decltype(cj) z;     // error 'z' is a reference, must be initialized
+
+
+                int i = 42, &p = &i, &r = i;
+                decltype(r + o) b; // 'b' is a uninitialized 'int'
+                decltype(*p) c;    // error: 'c' is a 'int &', must be initialized
+                decltype((i)) d;   // error: 'd' is a 'int &', must be initialized
+            </div></pre>
+
+            <li>the result of decltype((variable)) is always a reference, the result of decltype(variable) is a reference only if variable is a reference</li>
+        </ul>
+    </section>
+</article>
+
+<article class="wrapper">
+    <header>
+        <h1 class='pageTitle retroshadow'>auto</h1>
+    </header>
+    <section>
+        <ul>
+            <li>when using auto in a declaration statement, all types of the variable must be the same type</li>
+            <pre><div class="codeblock" mode="text/x-c++src" lineNumber=0 fontSize="10px">
+                auto i = 0, *p = &i;    // no problem
+                auto sz = 0, pi = 3.14; // error 'auto' deduced as 'int' in declaration of 'sz' and deduced as 'double' in declaration of 'pi'
+            </div></pre>
+            <li>when using reference as the initial value:</li>
+            <pre><div class="codeblock" mode="text/x-c++src" lineNumber=0 fontSize="10px">
+                int = 0, &r = i;
+                auto a = r; // the type of 'a' is 'int'
+            </div></pre>
+            <li>also, auto will normally ignore top-level const:</li>
+            <pre><div class="codeblock" mode="text/x-c++src" lineNumber=0 fontSize="10px">
+                const int ci = i, &cr = ci;
+                auto b = ci; // 'b' is a 'int'
+                auto c = cr; // 'c' is a 'int'
+                auto d = &i; // 'd' is a 'int *'
+                auto e = &ci; // 'e' is a 'const int *' (get the address of a const value is low-level const)
+            </div></pre>
+            <li>you should specify if you want to make const:</li>
+            <pre><div class="codeblock" mode="text/x-c++src" lineNumber=0 fontSize="10px">
+                const auto f = ci; // 'f' is a 'const int'
+            </div></pre>
+            <li>you can also make reference:</li>
+            <pre><div class="codeblock" mode="text/x-c++src" lineNumber=0 fontSize="10px">
+                auto &g = ci; // 'g' is a 'const int &', bind to ci
+
+                // you cannot bind a non-const reference to a literal value
+                auto &h = 42; // error: non-const lvalue reference to type 'int' cannot bind to a temporary of type 'int'
+                const auto &h = 42; // no problem
+            </div></pre>
+            <li>another thing to notice:</li>
+            <pre><div class="codeblock" mode="text/x-c++src" lineNumber=0 fontSize="10px">
+                auto k = ci, &l = i; // 'k' is a 'int', 'l' is a 'int &'
+                auto &m = ci, *p = &ci; // 'm' is a 'const int &', 'p' is a 'const int *'
+
+                // error: 'i' is a 'int', '&ci' is a 'const int'
+                auto &n = i, *p2 = &ci;
+            </div></pre>
+        </ul>
+    </section>
+</article>
+
+<article class="wrapper">
+    <header>
+        <h1 class='pageTitle retroshadow'>const </h1>
+    </header>
+    <section>
+        <h1 class="pageSubTitle">overview</h1>
+        <ul>
+            <li>you can bind reference to a **const** object, we call it **__reference to const__**.</li>
+            <pre><div class="codeblock" mode="text/x-c++src" lineNumber=0 fontSize="10px">
+                const int ci = 1024;
+                const int &rl = ci;
+
+                rl = 42;       // error: rl is a reference to const
+                int &rl2 = ci; // error: type error
+            </div></pre>
+
+            <li>however, when initializing a reference to const, you can use any expression as the initial value:</li>
+            <pre><div class="codeblock" mode="text/x-c++src" lineNumber=0 fontSize="10px">
+                int i = 42;
+                const int &rl = i; // no problem
+                const int &rl2 = 42; // no problem
+                const int &rl3 = rl * 2; // no problem
+                int &rl4 = rl * 2; // error
+            </div></pre>
+
+            <li>because the compiler do like this:</li>
+            <pre><div class="codeblock" mode="text/x-c++src" lineNumber=0 fontSize="10px">
+                // when you write:
+                double dval = 3.14;
+                const int &rd = dval;
+
+                // it actually works like this:
+                double dval = 3.14;
+                const int temp = dval;
+                const int &rd = temp;
+            </div></pre>
+        </ul>
+
+        <h1 class="pageSubTitle">top-level and low-level const</h1>
+        <ul>
+            <li>top-level const is used to denote any object is constant.</li>
+            <pre><div class="codeblock" mode="text/x-c++src" lineNumber=0 fontSize="10px">
+                int i = 1024;
+                const int *const p = &i; // left: top-level, right: low-level
+            </div></pre>
+        </ul>
+
+        <h1 class="pageSubTitle">constexpr</h1>
+        <ul>
+            <li>const expression refers to expression whose value can be calculated in the process of compilation</li>
+            <li>whether an object(or expression) is a const expression is determined by its data type and initial value.</li>
+            <li>in a complicated system, we can hardly(almost not likely) to figure out a const expression, so you can use
+                <b>constexpr</b>
+                to order the compiler to check whether it is a const expression
+            </li>
+            <pre><div class="codeblock" mode="text/x-c++src" lineNumber=0 fontSize="10px">
+                constexpr int mf = 30; // yes
+                constexpr int limit = mf + 1; // yes
+                constexpr int sz = size(); // only if size is a function with a constexpr signature
+            </div></pre>
+
+            <li>constexpr a pointer means pointer itself is unchangeable, it cannot point to other object.</li>
+            <pre><div class="codeblock" mode="text/x-c++src" lineNumber=0 fontSize="10px">
+                int i = 10;
+                constexpr int *p = &i; // error Cannot initialize a variable of type 'int *const' with an rvalue of type 'const int *'
+                int i2 = 10000;
+                p = &i2; // error Cannot assign to variable 'p' with const-qualified type 'int *const'
+            </div></pre>
+        </ul>
+    </section>
+</article>
+
+<article class="wrapper">
+    <header>
+        <h1 class='pageTitle retroshadow'>STL container</h1>
+    </header>
+    <section>
+        <table class="rwd-table">
+            <tr>
+                <th>container type</th>
+                <th>introduction</th>
+                <th>__trie_visit</th>
+                <th>insert/delete</th>
+            </tr>
+            <tr>
+                <td>vector</td>
+                <td>variable-size array</td>
+                <td>supports fast random access</td>
+                <td>insertion deletion operations at positions other than the tail may be slow</td>
+            </tr>
+            <tr>
+                <td>deque</td>
+                <td>double-ended queue</td>
+                <td>support fast random access</td>
+                <td>insert and delete at the head and tail positions are fast</td>
+            </tr>
+            <tr>
+                <td>list</td>
+                <td>doubly linked list</td>
+                <td>supports two-way sequential access</td>
+                <td>insert and delete operations at any position are fast</td>
+            </tr>
+            <tr>
+                <td>forward_list</td>
+                <td>singly linked list</td>
+                <td>support one-way sequential access</td>
+                <td>insert and delete operations at any position are fast</td>
+            </tr>
+            <tr>
+                <td>array</td>
+                <td>fixed size array</td>
+                <td>support fast random access</td>
+                <td>cannot add or delete elements</td>
+            </tr>
+            <tr>
+                <td>string</td>
+                <td>saved characters</td>
+                <td>supports fast random access</td>
+                <td>fast deletion operation of the cue at the end</td>
+            </tr>
+        </table>
+        <h1 class="pageSubTitle">programming assumptions using left closed and right open ranges</h1>
+        <ul>
+            <li>If <b>begin</b> and <b>end</b> are equal, the range is empty</li>
+            <li>If <b>begin</b> and <b>end</b> are not equal, there is at least one element in the range</li>
+            <li>We can increment <b>begin</b> to make it reach <b>end</b></li>
+            <pre><div class="codeblock" mode="text/x-c++src" lineNumber=0 fontSize="10px">
+                while (begin != end) {
+                    *begin = val;
+                    ++begin; // move pointer to the next element
+                }
+            </div></pre>
+            <li>Among the members of **_begin_** and **_end_**:</li>
+            <pre><div class="codeblock" mode="text/x-c++src" lineNumber=0 fontSize="10px">
+                list<string> a = {"Milton", "Shakespeare", "Austen"};
+                auto it1 = a.begin(); // list<string>::iterator
+                auto it2 = a.rbegin(); // list<string>::reverse_iterator
+                auto it3 = a.cbegin(); // list<string>::const_iterator
+                auto it4 = a.crbegin(); // list<string>::const_reverse_iterator
+            </div></pre>
+            <li>Member functions that do not start with c have been overloaded. Only when they are used in non-const containers will they get the corresponding iterator, otherwise it
+                is the const
+                version.When write access is not required, **_cbegin_** and **_cend_** should be used.
+            </li>
+            <pre><div class="codeblock" mode="text/x-c++src" lineNumber=0 fontSize="10px">
+                C c; // Default constructor. If c is an array, the elements in c are initialized by default, otherwise they are empty.
+
+                C c1(c2); // C c1 = c2;
+                // elements in c1 are copies of c2
+
+                C c{a, b, c, ...}; // C c = {a, b, c, ...};
+
+                C c(b, e); // initialized as a copy of elements in the specified range from b to e
+
+                // Only sequential containers (not including array) accept size parameters
+                C seq(n); // seq contains n elements; this constructor is explict (string is not applicable)
+
+                C seq(n, t); // seq contains n elements with initial value t
+            </div></pre>
+            <li>When using a copy of a container to initialize another container, only use iterator to specify the scope of initialization does not necessarily require the same type
+            </li>
+            <pre><div class="codeblock" mode="text/x-c++src" lineNumber=0 fontSize="10px">
+                list<string> authors = {"Milton", "Shakespeare", "Austen"};
+                vector<const char *> articles = {"a", "an", "the"};
+
+                list<string> list2(authors); // no problem
+                deque<string> authorList(authors); // error
+
+                forward_list<string> words(articles.begin(), articles.end()); // no problem
+            </div></pre>
+            <li>When declaring the array type, you must specify the size: <code>array&lt;int, 42> arr;</code></li>
+        </ul>
+
+    </section>
+</article>
+
+
+</body>
+</html>
+
+
+
+
+

@@ -1,0 +1,4 @@
+ToolSet: w64 10.0 (local)@C:\Environment\msys64\clang64
+Options: 
+
+Options:
