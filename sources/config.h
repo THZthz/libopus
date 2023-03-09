@@ -18,10 +18,14 @@
 extern "C" {
 #endif /* __cplusplus */
 
-#define CONFIG_REAL double
-#define CONFIG_REAL_MAX DBL_MAX
-#define CONFIG_REAL_MIN DBL_MIN
-#define CONFIG_REAL_EPSILON DBL_EPSILON
+/* the actual data type of "real" */
+#define OPUS_CONFIG_REAL double
+#define OPUS_CONFIG_REAL_MAX DBL_MAX
+#define OPUS_CONFIG_REAL_MIN DBL_MIN
+/* epsilon of data type "real" */
+#define OPUS_CONFIG_REAL_EPSILON DBL_EPSILON
+/* the prefix of all the functions and data types */
+#define OPUS_(name) opus_##name
 
 #ifdef __cplusplus
 };

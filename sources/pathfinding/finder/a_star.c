@@ -96,10 +96,10 @@ static graph_status_t create_context(pathfinder_t *finder, void **args)
 	/* we must have a graph to base our finder's context on */
 	if (!finder->graph_) return GRAPH_FAIL;
 
-	if (LIKELY(!context)) {
+	if (OPUS_LIKELY(!context)) {
 		context = (context_t *) malloc(sizeof(context_t));
 
-		if (UNLIKELY(!context)) return GRAPH_NO_MEM;
+		if (OPUS_UNLIKELY(!context)) return GRAPH_NO_MEM;
 
 		finder->context_  = context;
 		context->start    = GRAPH_MAX_ID;
@@ -107,7 +107,7 @@ static graph_status_t create_context(pathfinder_t *finder, void **args)
 		context->n_nodes_ = finder->graph_->get_vertex_count(finder->graph_);
 		context->nodes_   = (a_star_node_t *) malloc(context->n_nodes_ * sizeof(a_star_node_t));
 
-		if (UNLIKELY(!context->nodes_)) {
+		if (OPUS_UNLIKELY(!context->nodes_)) {
 			finder->context_ = NULL;
 			free(context);
 			return GRAPH_NO_MEM;
@@ -235,7 +235,7 @@ static graph_status_t get_path(pathfinder_t *finder, graph_id_t **res_path, grap
 	*res_path  = (graph_id_t *) malloc(capacity * sizeof(graph_id_t));
 	*res_count = 0;
 
-	if (UNLIKELY(!(*res_path))) {
+	if (OPUS_UNLIKELY(!(*res_path))) {
 		*res_path = NULL;
 		return GRAPH_NO_MEM;
 	}

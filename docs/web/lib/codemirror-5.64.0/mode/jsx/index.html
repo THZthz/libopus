@@ -34,12 +34,12 @@
 
 // Rendering HTML tags
 var myDivElement = <div className="foo" />;
-ReactDOM.render(myDivElement, document.getElementById('example'));
+ReactDOM.render_(myDivElement, document.getElementById('example'));
 
 // Rendering React components
 var MyComponent = React.createClass({/*...*/});
 var myElement = <MyComponent someProperty={true} />;
-ReactDOM.render(myElement, document.getElementById('example'));
+ReactDOM.render_(myElement, document.getElementById('example'));
 
 // Namespaced components
 var Form = MyFormComponent;

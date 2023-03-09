@@ -71,7 +71,7 @@ static int event_namespace_done_(event_namespace_t *namespace)
 					if (ele->identifier == EVENT_IS_NAMESPACE)
 						event_namespace_done_(ele);
 					else
-						array_destroy(((event_t *) ele)->callback_list);
+						opus_arr_destroy(((event_t *) ele)->callback_list);
 				}
 				done++;
 			}
@@ -83,7 +83,7 @@ static int event_namespace_done_(event_namespace_t *namespace)
 
 static void event_namespace_destroy_(event_namespace_t *namespace)
 {
-	NOT_NULL(namespace);
+	OPUS_NOT_NULL(namespace);
 	event_namespace_done_(namespace);
 	free(namespace);
 }
@@ -183,8 +183,8 @@ int event_hub_on(event_hub_t *hub, const char *name, event_t *event)
 			if (next_token == NULL) {
 				if (next->table->user_data != NULL) {
 					event_t *e = next->table->user_data;
-					array_concat(e->callback_list, event->callback_list);
-					array_destroy(event->callback_list);
+					opus_arr_concat(e->callback_list, event->callback_list);
+					opus_arr_destroy(event->callback_list);
 				} else {
 					event_t *temp          = (event_t *) malloc(sizeof(event_t));
 					next->table->user_data = temp;
@@ -312,7 +312,7 @@ static int event_hub_foreach_events_by_name(event_hub_t *hub, const char *event_
 static int event_hub_emit_callback_(event_hub_t *hub, event_t *e, void *args)
 {
 	size_t i;
-	for (i = 0; i < array_len(e->callback_list); i++)
+	for (i = 0; i < opus_arr_len(e->callback_list); i++)
 		if (e->times != 0 && e->callback_list[i](hub, e, args) == EVENT_INTERRUPT) break;
 	if (e->times > 0) e->times--; /* decrease emission counter */
 	return 0;
@@ -321,7 +321,7 @@ static int event_hub_emit_callback_(event_hub_t *hub, event_t *e, void *args)
 static int event_hub_remove_event_by_name_callback_(event_hub_t *hub, event_t *e, void *args)
 {
 	event_t **events = (event_t **) args;
-	array_push(events, &e);
+	opus_arr_push(events, &e);
 	return 0;
 }
 
@@ -371,7 +371,7 @@ event_t *event_create(event_cb *callback_list, int len, int times, void *context
 	event_t *event = (event_t *) malloc(sizeof(event_t));
 	if (event == NULL) return NULL;
 
-	array_create(event->callback_list, sizeof(event_cb *));
+	opus_arr_create(event->callback_list, sizeof(event_cb *));
 
 	/* no space for callback list, no need to create this event */
 	if (event->callback_list == NULL) {
@@ -379,7 +379,7 @@ event_t *event_create(event_cb *callback_list, int len, int times, void *context
 		return NULL;
 	} else {
 		int i;
-		array_resize(event->callback_list, len);
+		opus_arr_resize(event->callback_list, len);
 		for (i = 0; i < len; i++) event->callback_list[i] = callback_list[i];
 	}
 
@@ -392,6 +392,6 @@ event_t *event_create(event_cb *callback_list, int len, int times, void *context
 
 void event_destroy(event_t *event)
 {
-	array_destroy(event->callback_list);
+	opus_arr_destroy(event->callback_list);
 	free(event);
 }

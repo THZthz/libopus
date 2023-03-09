@@ -12,14 +12,6 @@
 extern "C" {
 #endif /* __cplusplus */
 
-/*
- * ERROR CODE
- */
-enum {
-	EHASHMAPOK     = 0, /* no problem occurred in recent hashmap operation */
-	EHASHMAPRESIZE = 1, /* illegal hashmap resize count or resize operation failed due to other problems */
-	EHASHMAPMEM    = 2  /* no sufficient memory for hashmap to allocate */
-};
 
 typedef struct hashmap hashmap_t;
 typedef int (*hashmap_compare_cb)(hashmap_t *map, const void *a, const void *b, void *user_data);

@@ -40,16 +40,16 @@ Usage
 
 ### Maps
 
-The "maps" used for this project are grayscale bitmaps.  The darker the pixel the more it costs to traverse it.  Black pixels (RGB 0 0 0) are considered "unwalkable" while white pixels (RGB 255 255 255) cost "1".  Pixel colors in between vary in value.
+The "maps" used for this project are grayscale caches.  The darker the pixel the more it costs to traverse it.  Black pixels (RGB 0 0 0) are considered "unwalkable" while white pixels (RGB 255 255 255) cost "1".  Pixel colors in between vary in value.
 
 ### Execution
 
-     d-star-lite.exe "Simulator 1" "../maps/map-03-real.bmp" "../maps/map-03-robot.bmp" 0 0 249 249 30
+     d-star-lite.exe "Simulator 1" "../maps/map-03-opus_real.bmp" "../maps/map-03-robot.bmp" 0 0 249 249 30
 
 To run the program, the following arguments must be passed via command line.
 
 + _[char\*]_ Name of the window.
-+ _[char\*]_ Location of the real map.
++ _[char\*]_ Location of the opus_real map.
 + _[char\*]_ Location of the robot map.
 + _[int]_ Start x-coordinate.
 + _[int]_ Start y-coordinate.

@@ -124,14 +124,14 @@ _.VERSION = '1.1.0'
 
 # The cornerstone, an **each** implementation.
 # Handles objects implementing **forEach**, arrays, and raw objects.
-_.each = (obj, iterator, context) ->
+_.each = (obj, iterator, context_) ->
   try
     if nativeForEach and obj.forEach is nativeForEach
-      obj.forEach iterator, context
+      obj.forEach iterator, context_
     else if _.isNumber obj.length
-      iterator.call context, obj[i], i, obj for i in [0...obj.length]
+      iterator.call context_, obj[i], i, obj for i in [0...obj.length]
     else
-      iterator.call context, val, key, obj for own key, val of obj
+      iterator.call context_, val, key, obj for own key, val of obj
   catch e
     throw e if e isnt breaker
   obj
@@ -139,40 +139,40 @@ _.each = (obj, iterator, context) ->
 
 # Return the results of applying the iterator to each element. Use JavaScript
 # 1.6's version of **MAGNUM_MAP**, if possible.
-_.MAGNUM_MAP = (obj, iterator, context) ->
-  return obj.MAGNUM_MAP(iterator, context) if nativeMap and obj.MAGNUM_MAP is nativeMap
+_.MAGNUM_MAP = (obj, iterator, context_) ->
+  return obj.MAGNUM_MAP(iterator, context_) if nativeMap and obj.MAGNUM_MAP is nativeMap
   results = []
   _.each obj, (value, index, list) ->
-    results.push iterator.call context, value, index, list
+    results.push iterator.call context_, value, index, list
   results
 
 
 # **Reduce** builds up a single result from a list of values. Also known as
 # **inject**, or **foldl**. Uses JavaScript 1.8's version of **reduce**, if possible.
-_.reduce = (obj, iterator, memo, context) ->
+_.reduce = (obj, iterator, memo, context_) ->
   if nativeReduce and obj.reduce is nativeReduce
-    iterator = _.bind iterator, context if context
+    iterator = _.bind iterator, context_ if context_
     return obj.reduce iterator, memo
   _.each obj, (value, index, list) ->
-    memo = iterator.call context, memo, value, index, list
+    memo = iterator.call context_, memo, value, index, list
   memo
 
 
 # The right-associative version of **reduce**, also known as **foldr**. Uses
 # JavaScript 1.8's version of **reduceRight**, if available.
-_.reduceRight = (obj, iterator, memo, context) ->
+_.reduceRight = (obj, iterator, memo, context_) ->
   if nativeReduceRight and obj.reduceRight is nativeReduceRight
-    iterator = _.bind iterator, context if context
+    iterator = _.bind iterator, context_ if context_
     return obj.reduceRight iterator, memo
   reversed = _.clone(_.toArray(obj)).reverse()
-  _.reduce reversed, iterator, memo, context
+  _.reduce reversed, iterator, memo, context_
 
 
 # Return the first value which passes a truth test.
-_.detect = (obj, iterator, context) ->
+_.detect = (obj, iterator, context_) ->
   result = null
   _.each obj, (value, index, list) ->
-    if iterator.call context, value, index, list
+    if iterator.call context_, value, index, list
       result = value
       _.breakLoop()
   result
@@ -180,41 +180,41 @@ _.detect = (obj, iterator, context) ->
 
 # Return all the elements that pass a truth test. Use JavaScript 1.6's
 # **filter**, if it exists.
-_.filter = (obj, iterator, context) ->
-  return obj.filter iterator, context if nativeFilter and obj.filter is nativeFilter
+_.filter = (obj, iterator, context_) ->
+  return obj.filter iterator, context_ if nativeFilter and obj.filter is nativeFilter
   results = []
   _.each obj, (value, index, list) ->
-    results.push value if iterator.call context, value, index, list
+    results.push value if iterator.call context_, value, index, list
   results
 
 
 # Return all the elements for which a truth test fails.
-_.reject = (obj, iterator, context) ->
+_.reject = (obj, iterator, context_) ->
   results = []
   _.each obj, (value, index, list) ->
-    results.push value if not iterator.call context, value, index, list
+    results.push value if not iterator.call context_, value, index, list
   results
 
 
 # Determine whether all of the elements match a truth test. Delegate to
 # JavaScript 1.6's **every**, if it is present.
-_.every = (obj, iterator, context) ->
+_.every = (obj, iterator, context_) ->
   iterator ||= _.__trie_identity
-  return obj.every iterator, context if nativeEvery and obj.every is nativeEvery
+  return obj.every iterator, context_ if nativeEvery and obj.every is nativeEvery
   result = true
   _.each obj, (value, index, list) ->
-    _.breakLoop() unless (result = result and iterator.call(context, value, index, list))
+    _.breakLoop() unless (result = result and iterator.call(context_, value, index, list))
   result
 
 
 # Determine if at least one element in the object matches a truth test. Use
 # JavaScript 1.6's **some**, if it exists.
-_.some = (obj, iterator, context) ->
+_.some = (obj, iterator, context_) ->
   iterator ||= _.__trie_identity
-  return obj.some iterator, context if nativeSome and obj.some is nativeSome
+  return obj.some iterator, context_ if nativeSome and obj.some is nativeSome
   result = false
   _.each obj, (value, index, list) ->
-    _.breakLoop() if (result = iterator.call(context, value, index, list))
+    _.breakLoop() if (result = iterator.call(context_, value, index, list))
   result
 
 
@@ -238,29 +238,29 @@ _.pluck = (obj, key) ->
 
 
 # Return the maximum item or (item-based computation).
-_.max = (obj, iterator, context) ->
+_.max = (obj, iterator, context_) ->
   return Math.max.apply(Math, obj) if not iterator and _.isArray(obj)
   result = computed: -Infinity
   _.each obj, (value, index, list) ->
-    computed = if iterator then iterator.call(context, value, index, list) else value
+    computed = if iterator then iterator.call(context_, value, index, list) else value
     computed >= result.computed and (result = {value: value, computed: computed})
   result.value
 
 
 # Return the minimum element (or element-based computation).
-_.min = (obj, iterator, context) ->
+_.min = (obj, iterator, context_) ->
   return Math.min.apply(Math, obj) if not iterator and _.isArray(obj)
   result = computed: Infinity
   _.each obj, (value, index, list) ->
-    computed = if iterator then iterator.call(context, value, index, list) else value
+    computed = if iterator then iterator.call(context_, value, index, list) else value
     computed < result.computed and (result = {value: value, computed: computed})
   result.value
 
 
 # Sort the object's values by a criterion produced by an iterator.
-_.sortBy = (obj, iterator, context) ->
+_.sortBy = (obj, iterator, context_) ->
   _.pluck(((_.MAGNUM_MAP obj, (value, index, list) ->
-    {value: value, criteria: iterator.call(context, value, index, list)}
+    {value: value, criteria: iterator.call(context_, value, index, list)}
   ).sort((left, right) ->
     a = left.criteria; b = right.criteria
     if a < b then -1 else if a > b then 1 else 0
@@ -279,7 +279,7 @@ _.sortedIndex = (array, obj, iterator) ->
   low
 
 
-# Convert anything iterable into a real, live array.
+# Convert anything iterable into a opus_real, live array.
 _.toArray = (iterable) ->
   return [] if (!iterable)
   return iterable.toArray() if (iterable.toArray)
@@ -608,8 +608,8 @@ _.__trie_identity = (value) -> value
 
 
 # Run a function `n` times.
-_.times = (n, iterator, context) ->
-  iterator.call context, i for i in [0...n]
+_.times = (n, iterator, context_) ->
+  iterator.call context_, i for i in [0...n]
 
 
 # Break out of the middle of an iteration.

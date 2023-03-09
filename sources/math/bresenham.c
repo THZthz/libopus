@@ -17,7 +17,7 @@
 /**
  *  @brief initialize a bresenham_bresenham_data_t struct.
  *
- *  	after calling this function you use bresenham_line_step to iterate
+ *  	after calling this function you use opus_bresenham_step to iterate
  *  	over the individual points on the line.
  *
  *  @param x_from The starting x position.
@@ -26,7 +26,7 @@
  *  @param y_to The ending y position.
  *  @param data Pointer to a bresenham_bresenham_data_t struct.
  */
-void bresenham_line_init(int x_from, int y_from, int x_to, int y_to, bresenham_data_t* data)
+void opus_bresenham_init(int x_from, int y_from, int x_to, int y_to, opus_bresenham_data* data)
 {
 	data->orig_x  = x_from;
 	data->orig_y  = y_from;
@@ -67,7 +67,7 @@ void bresenham_line_init(int x_from, int y_from, int x_to, int y_to, bresenham_d
  *  @param data Pointer to a initialized bresenham_bresenham_data_t struct.
  *  @return 1 after the ending point has been reached, 0 otherwise.
  */
-int bresenham_line_step(int* cur_x, int* cur_y, bresenham_data_t* data)
+int opus_bresenham_step(int* cur_x, int* cur_y, opus_bresenham_data* data)
 {
 	if (data->step_x * data->delta_x > data->step_y * data->delta_y) {
 		if (data->orig_x == data->dest_x) return 1;

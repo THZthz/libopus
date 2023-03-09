@@ -38,17 +38,17 @@
 /* return the link count of the neuron on layer "l", "l" should not be "0" */
 #define link_count(net, l) ((net)->nmap_[(l) -1] + 1)
 
-static INLINE double sigmoid_(double a)
+static OPUS_INLINE double sigmoid_(double a)
 {
 	return 1.0 / (1 + exp(-a));
 }
 
-static INLINE double sigmoid_derivation_(double a)
+static OPUS_INLINE double sigmoid_derivation_(double a)
 {
 	return a * (1.0 - a);
 }
 
-static INLINE ann_real ann_sigmoid_(ann_real v)
+static OPUS_INLINE opus_real ann_sigmoid_(opus_real v)
 {
 	static const double   max = 15, min = -15;
 	static const uint64_t size = 4096;
@@ -75,48 +75,48 @@ static INLINE ann_real ann_sigmoid_(ann_real v)
 
 	j = (uint64_t) ((v - min) * interval + 0.5);
 
-	if (UNLIKELY(j >= size)) return table[size - 1];
+	if (OPUS_UNLIKELY(j >= size)) return table[size - 1];
 
 	return table[j];
 }
 
-static INLINE ann_real ann_sigmoid_derivation_(ann_real v)
+static OPUS_INLINE opus_real ann_sigmoid_derivation_(opus_real v)
 {
-	return (ann_real) sigmoid_derivation_((double) v);
+	return (opus_real) sigmoid_derivation_((double) v);
 }
 
-static INLINE ann_real ann_cost_(ann_real y, ann_real a)
+static OPUS_INLINE opus_real ann_cost_(opus_real y, opus_real a)
 {
-	return (ann_real) 0.5 * (y - a) * (y - a);
+	return (opus_real) 0.5 * (y - a) * (y - a);
 }
 
-static INLINE ann_real ann_cost_derivation_(ann_real y, ann_real a)
+static OPUS_INLINE opus_real ann_cost_derivation_(opus_real y, opus_real a)
 {
 	return y - a;
 }
 
-static INLINE ann_real dot_(const ann_real *a, const ann_real *b, uint32_t len)
+static OPUS_INLINE opus_real dot_(const opus_real *a, const opus_real *b, uint32_t len)
 {
-	ann_real sum = 0;
-	uint32_t i;
+	opus_real sum = 0;
+	uint32_t  i;
 	for (i = 0; i < len; i++) sum += a[i] * b[i];
 	return sum;
 }
 
-ann_t *ann_create(uint32_t n_layer, const uint32_t *nmap)
+opus_ann *opus_ann_create(uint32_t n_layer, const uint32_t *nmap)
 {
-	ann_t *net = (ann_t *) malloc(sizeof(ann_t));
-	NOT_NULL(net);
-	return ann_init(net, n_layer, nmap);
+	opus_ann *net = (opus_ann *) malloc(sizeof(opus_ann));
+	OPUS_NOT_NULL(net);
+	return opus_ann_init(net, n_layer, nmap);
 }
 
-ann_t *ann_init(ann_t *net, uint32_t n_layer, const uint32_t *nmap)
+opus_ann *opus_ann_init(opus_ann *net, uint32_t n_layer, const uint32_t *nmap)
 {
 	uint32_t i;
 
-	net->n_layer_        = n_layer;
-	net->n_input_        = nmap[0];
-	net->n_output_       = nmap[n_layer - 1];
+	net->n_layer_  = n_layer;
+	net->n_input_  = nmap[0];
+	net->n_output_ = nmap[n_layer - 1];
 
 	net->nmap_  = (uint32_t *) malloc(sizeof(uint32_t) * n_layer);
 	net->tnmap_ = (uint32_t *) malloc(sizeof(uint32_t) * (n_layer + 1));
@@ -147,69 +147,69 @@ ann_t *ann_init(ann_t *net, uint32_t n_layer, const uint32_t *nmap)
 		}
 		net->wmap_[i] = net->wmap_[i - 1] + (nmap[i - 2] + 1) * nmap[i - 1];
 
-		net->errors_  = (ann_real *) malloc(sizeof(ann_real) * (n_neuron - n_input));
-		net->weights  = (ann_real *) malloc(sizeof(ann_real) * n_link);
-		net->outputs_ = (ann_real *) malloc(sizeof(ann_real) * n_neuron);
+		net->errors_  = (opus_real *) malloc(sizeof(opus_real) * (n_neuron - n_input));
+		net->weights  = (opus_real *) malloc(sizeof(opus_real) * n_link);
+		net->outputs_ = (opus_real *) malloc(sizeof(opus_real) * n_neuron);
 
-		memset(net->weights, 0, sizeof(ann_real) * n_link);
-		memset(net->outputs_, 0, sizeof(ann_real) * n_neuron);
-		memset(net->errors_, 0, sizeof(ann_real) * (n_neuron - n_input));
+		memset(net->weights, 0, sizeof(opus_real) * n_link);
+		memset(net->outputs_, 0, sizeof(opus_real) * n_neuron);
+		memset(net->errors_, 0, sizeof(opus_real) * (n_neuron - n_input));
 	}
 
 	return net;
 }
 
-void ann_done(ann_t *net)
+void opus_ann_done(opus_ann *net)
 {
 	if (net->weights) free(net->weights);
 	if (net->errors_) free(net->errors_);
 	if (net->outputs_) free(net->outputs_);
 }
 
-void ann_destroy(ann_t *net)
+void opus_ann_destroy(opus_ann *net)
 {
-	ann_done(net);
+	opus_ann_done(net);
 	free(net);
 }
 
 /* randomize all the weights of the network from -0.5 to 0.5  */
-void ann_randomize(ann_t *net)
+void opus_ann_randomize(opus_ann *net)
 {
 	uint32_t i, n = net->wmap_[net->n_layer_];
 	for (i = 0; i < n; ++i) {
-		ann_real r      = (ann_real) rand() / RAND_MAX;
-		net->weights[i] = r - (ann_real) 0.5;
+		opus_real r     = (opus_real) rand() / RAND_MAX;
+		net->weights[i] = r - (opus_real) 0.5;
 	}
 }
 
-ann_real *ann_predict(ann_t *net, const ann_real *input)
+opus_real *opus_ann_predict(opus_ann *net, const opus_real *input)
 {
-	ann_set_input(net, input);
-	ann_feed_forward(net);
-	return ann_get_output(net);
+	opus_ann_set_input(net, input);
+	opus_ann_feed_forward(net);
+	return opus_ann_get_output(net);
 }
 
-void ann_learn(ann_t *net, const ann_real *input, const ann_real *target_output, ann_real learning_rate)
+void opus_ann_learn(opus_ann *net, const opus_real *input, const opus_real *target_output, opus_real learning_rate)
 {
-	ann_predict(net, input);
-	ann_back_propagate(net, target_output, learning_rate);
+	opus_ann_predict(net, input);
+	opus_ann_back_propagate(net, target_output, learning_rate);
 }
 
-void ann_set_input(ann_t *net, const ann_real *input_data)
+void opus_ann_set_input(opus_ann *net, const opus_real *input_data)
 {
 	/* store the input data in the output field of input neurons */
-	memcpy(net->outputs_, input_data, sizeof(ann_real) * net->nmap_[0]);
+	memcpy(net->outputs_, input_data, sizeof(opus_real) * net->nmap_[0]);
 }
 
-ann_real *ann_get_output(ann_t *net)
+opus_real *opus_ann_get_output(opus_ann *net)
 {
 	return outputs_layer(net, net->n_layer_ - 1);
 }
 
-void ann_feed_forward(ann_t *net)
+void opus_ann_feed_forward(opus_ann *net)
 {
-	uint32_t  i, j;
-	ann_real *input = outputs_layer(net, 0), *output;
+	uint32_t   i, j;
+	opus_real *input = outputs_layer(net, 0), *output;
 
 	/* ignore input layer */
 	/* we do not need to calculate the output of the neurons on input layer */
@@ -217,9 +217,9 @@ void ann_feed_forward(ann_t *net)
 		output = outputs_layer(net, i);
 
 		for (j = 0; j < neuron_count(net, i); j++) {
-			ann_real *weights = weights_neuron(net, i, j);
-			ann_real  sum     = -1 * weights[0] + dot_(weights + 1, input, link_count(net, i) - 1);
-			output[j]         = ANN_ACTIVATION(sum);
+			opus_real *weights = weights_neuron(net, i, j);
+			opus_real  sum     = -1 * weights[0] + dot_(weights + 1, input, link_count(net, i) - 1);
+			output[j]          = OPUS_ANN_ACTIVATION(sum);
 		}
 
 		/* every layer takes the output of the previous layer as input */
@@ -237,36 +237,36 @@ void ann_feed_forward(ann_t *net)
  * @param target_outputs
  * @param learning_rate
  */
-void ann_back_propagate(ann_t *net, const ann_real *target_outputs, ann_real learning_rate)
+void opus_ann_back_propagate(opus_ann *net, const opus_real *target_outputs, opus_real learning_rate)
 {
-	uint32_t  i, j, k;
-	ann_real *inputs, *outputs, *errors, *targets, *weights;
+	uint32_t   i, j, k;
+	opus_real *inputs, *outputs, *errors, *targets, *weights;
 
 	/* calculate errors for output layer */
 	outputs = outputs_layer(net, net->n_layer_ - 1);
 	errors  = errors_layer(net, net->n_layer_ - 1);
-	targets = (ann_real *) target_outputs;
+	targets = (opus_real *) target_outputs;
 	for (i = 0; i < net->n_output_; ++i)
-		errors[i] = ANN_COST_DERIVATION(targets[i], outputs[i]) * ANN_DERIVATION(outputs[i]);
+		errors[i] = OPUS_ANN_COST_DERIVATION(targets[i], outputs[i]) * OPUS_ANN_DERIVATION(outputs[i]);
 
 	/* back-propagate the errors of neurons on each layer except input layer */
 	for (i = net->n_layer_ - 2; i != 0; --i) {
-		ann_real *next_errors;
+		opus_real *next_errors;
 
-		next_errors  = errors_layer(net, i + 1);
-		outputs      = outputs_layer(net, i);
-		errors       = errors_layer(net, i);
+		next_errors = errors_layer(net, i + 1);
+		outputs     = outputs_layer(net, i);
+		errors      = errors_layer(net, i);
 
 		/* for each neuron on this layer */
 		for (j = 0; j < net->nmap_[i]; j++) {
-			ann_real error = 0;
+			opus_real error = 0;
 
 			/* calculate forwarded error from following layer */
 			for (k = 0; k < net->nmap_[i + 1]; ++k)
 				error += next_errors[k] * weights_neuron(net, i + 1, k)[j + 1];
 
 			/* calculate the error of this neuron */
-			errors[j] = ANN_DERIVATION(outputs[j]) * error;
+			errors[j] = OPUS_ANN_DERIVATION(outputs[j]) * error;
 		}
 	}
 
@@ -288,12 +288,12 @@ void ann_back_propagate(ann_t *net, const ann_real *target_outputs, ann_real lea
 }
 
 /* get the weights array for the "n"th neuron on the layer "l" */
-ann_real *ann_get_weights(ann_t *net, uint32_t l, uint32_t n)
+opus_real *opus_ann_get_weights(opus_ann *net, uint32_t l, uint32_t n)
 {
 	return weights_neuron(net, l, n);
 }
 
-void ann_console(ann_t *net)
+void opus_ann_console(opus_ann *net)
 {
 	FILE    *out = stdout;
 	uint32_t i, j, k;
@@ -334,34 +334,34 @@ void ann_console(ann_t *net)
 	}
 }
 
-ann_t *ann_get_copy(ann_t *net)
+opus_ann *opus_ann_get_copy(opus_ann *net)
 {
-	ann_t *copy = ann_create(net->n_layer_, net->nmap_);
-	memcpy(copy->weights, net->weights, sizeof(ann_real) * net->wmap_[net->n_layer_]);
+	opus_ann *copy = opus_ann_create(net->n_layer_, net->nmap_);
+	memcpy(copy->weights, net->weights, sizeof(opus_real) * net->wmap_[net->n_layer_]);
 	return copy;
 }
 
-ann_t *ann_load(FILE *in)
+opus_ann *opus_ann_load(FILE *in)
 {
-	ann_t   *net;
-	uint32_t n_layer, *nmap;
+	opus_ann   *net;
+	uint32_t    n_layer, *nmap;
 
 	fread(&n_layer, sizeof(uint32_t), 1, in);
 	nmap = (uint32_t *) malloc(sizeof(uint32_t) * n_layer);
 	fread(nmap, sizeof(uint32_t), n_layer, in);
 
-	net = ann_create(n_layer, nmap);
+	net = opus_ann_create(n_layer, nmap);
 	free(nmap);
 
-	fread(net->weights, sizeof(ann_real), net->wmap_[net->n_layer_], in);
+	fread(net->weights, sizeof(opus_real), net->wmap_[net->n_layer_], in);
 
 	return net;
 }
 
-void ann_save(ann_t *net, FILE *out)
+void opus_ann_save(opus_ann *net, FILE *out)
 {
 	size_t c;
-	if ((c = fwrite(&net->n_layer_, sizeof(uint32_t), 1, out)) == 0) WARNING("ANN::save::Failed to write data(1)\n");
-	if ((c = fwrite(net->nmap_, sizeof(uint32_t), net->n_layer_, out)) == 0) WARNING("ANN::save::Failed to write data(2)\n");
-	if ((c = fwrite(net->weights, sizeof(ann_real), net->wmap_[net->n_layer_], out)) == 0) WARNING("ANN::save::Failed to write data(3)\n");
+	if ((c = fwrite(&net->n_layer_, sizeof(uint32_t), 1, out)) == 0) OPUS_WARNING("ANN::save::Failed to write data(1)\n");
+	if ((c = fwrite(net->nmap_, sizeof(uint32_t), net->n_layer_, out)) == 0) OPUS_WARNING("ANN::save::Failed to write data(2)\n");
+	if ((c = fwrite(net->weights, sizeof(opus_real), net->wmap_[net->n_layer_], out)) == 0) OPUS_WARNING("ANN::save::Failed to write data(3)\n");
 }

@@ -56,12 +56,12 @@ struct context_d {
 	heap_t open_heap_;
 };
 
-static INLINE graph_id_t get_node_id(context_t *context, d_star_node_t *node)
+static OPUS_INLINE graph_id_t get_node_id(context_t *context, d_star_node_t *node)
 {
 	return node - context->nodes_;
 }
 
-static INLINE d_star_node_t *get_node(context_t *context, graph_id_t id)
+static OPUS_INLINE d_star_node_t *get_node(context_t *context, graph_id_t id)
 {
 	return &context->nodes_[id];
 }
@@ -203,10 +203,10 @@ static graph_status_t create_context(pathfinder_t *finder, void **args)
 	/* we must have a graph to base our finder's context on */
 	if (!finder->graph_) return GRAPH_FAIL;
 
-	if (LIKELY(!context)) {
+	if (OPUS_LIKELY(!context)) {
 		context = (context_t *) malloc(sizeof(context_t));
 
-		if (UNLIKELY(!context)) return GRAPH_NO_MEM;
+		if (OPUS_UNLIKELY(!context)) return GRAPH_NO_MEM;
 
 		finder->context_      = context;
 		context->graph        = finder->graph_;
@@ -313,7 +313,7 @@ static graph_status_t get_path(pathfinder_t *finder, graph_id_t **res_path, grap
 	*res_path  = (graph_id_t *) malloc(capacity * sizeof(graph_id_t));
 	*res_count = 0;
 
-	if (UNLIKELY(!(*res_path))) {
+	if (OPUS_UNLIKELY(!(*res_path))) {
 		*res_path = NULL;
 		return GRAPH_NO_MEM;
 	}

@@ -21,6 +21,7 @@ extern "C" {
 #include <float.h>
 #include <stdarg.h>
 #include <stdint.h>
+#include <stddef.h>
 
 #define GRAPH_OK (0)
 #define GRAPH_FAIL (1)

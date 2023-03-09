@@ -45,7 +45,7 @@
         }();
 
         var isOperatorChar = /[+\-*&%=<>!?|~^@]/;
-        var isJsonldKeyword = /^@(context|id|value|language|type|container|list|set|reverse|index|base|vocab|graph)"/;
+        var isJsonldKeyword = /^@(context_|id|value|language|type|container|list|set|reverse|index|base|vocab|graph)"/;
 
         function readRegexp(stream) {
             var escaped = false, next, inSet = false;
@@ -252,7 +252,7 @@
             if (!trackScope) return false
             for (var v = state.localVars; v; v = v.next)
                 if (v.name == varname) return true;
-            for (var cx = state.context; cx; cx = cx.prev) {
+            for (var cx = state.context_; cx; cx = cx.prev) {
                 for (var v = cx.vars; v; v = v.next)
                     if (v.name == varname) return true;
             }
@@ -304,12 +304,12 @@
             var state = cx.state;
             cx.marked = "def";
             if (!trackScope) return
-            if (state.context) {
-                if (state.lexical.info == "var" && state.context && state.context.block) {
+            if (state.context_) {
+                if (state.lexical.info == "var" && state.context_ && state.context_.block) {
                     // FIXME function decls are also not block scoped
-                    var newContext = registerVarScoped(varname, state.context)
+                    var newContext = registerVarScoped(varname, state.context_)
                     if (newContext != null) {
-                        state.context = newContext
+                        state.context_ = newContext
                         return
                     }
                 } else if (!inList(varname, state.localVars)) {
@@ -322,18 +322,18 @@
                 state.globalVars = new Var(varname, state.globalVars)
         }
 
-        function registerVarScoped(varname, context) {
-            if (!context) {
+        function registerVarScoped(varname, context_) {
+            if (!context_) {
                 return null
-            } else if (context.block) {
-                var inner = registerVarScoped(varname, context.prev)
+            } else if (context_.block) {
+                var inner = registerVarScoped(varname, context_.prev)
                 if (!inner) return null
-                if (inner == context.prev) return context
-                return new Context(inner, context.vars, true)
-            } else if (inList(varname, context.vars)) {
-                return context
+                if (inner == context_.prev) return context_
+                return new Context(inner, context_.vars, true)
+            } else if (inList(varname, context_.vars)) {
+                return context_
             } else {
-                return new Context(context.prev, new Var(varname, context.vars), false)
+                return new Context(context_.prev, new Var(varname, context_.vars), false)
             }
         }
 
@@ -357,18 +357,18 @@
         var defaultVars = new Var("this", new Var("arguments", null))
 
         function pushcontext() {
-            cx.state.context = new Context(cx.state.context, cx.state.localVars, false)
+            cx.state.context_ = new Context(cx.state.context_, cx.state.localVars, false)
             cx.state.localVars = defaultVars
         }
 
         function pushblockcontext() {
-            cx.state.context = new Context(cx.state.context, cx.state.localVars, true)
+            cx.state.context_ = new Context(cx.state.context_, cx.state.localVars, true)
             cx.state.localVars = null
         }
 
         function popcontext() {
-            cx.state.localVars = cx.state.context.vars
-            cx.state.context = cx.state.context.prev
+            cx.state.localVars = cx.state.context_.vars
+            cx.state.context_ = cx.state.context_.prev
         }
 
         popcontext.lex = true
@@ -952,7 +952,7 @@
             if (value == "?") return cont(classfield)
             if (type == ":") return cont(typeexpr, maybeAssign)
             if (value == "=") return cont(expressionNoComma)
-            var context = cx.state.lexical.prev, isInterface = context && context.info == "interface"
+            var context_ = cx.state.lexical.prev, isInterface = context_ && context_.info == "interface"
             return pass(isInterface ? functiondecl : functiondef)
         }
 
@@ -1044,7 +1044,7 @@
                     cc: [],
                     lexical: new JSLexical((basecolumn || 0) - indentUnit, 0, "block", false),
                     localVars: parserConfig.localVars,
-                    context: parserConfig.localVars && new Context(null, null, false),
+                    context_: parserConfig.localVars && new Context(null, null, false),
                     indented: basecolumn || 0
                 };
                 if (parserConfig.globalVars && typeof parserConfig.globalVars == "object")

@@ -34,10 +34,10 @@ MAINTAINER Amer Grgic "amer@livebyt.es"
 WORKDIR /data/ghost
 
 # Install dependencies for nginx installation
-RUN apt-get update
+RUN apt-get update_
 RUN apt-get install -y python g++ make software-properties-common --force-yes
 RUN add-apt-repository ppa:chris-lea/node.js
-RUN apt-get update
+RUN apt-get update_
 # Install unzip
 RUN apt-get install -y unzip
 # Install curl

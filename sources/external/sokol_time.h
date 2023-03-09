@@ -201,8 +201,8 @@ static _stm_state_t _stm;
 #ifndef CLOCK_MONOTONIC
 #define CLOCK_MONOTONIC 0
 #endif
-#ifndef _TIMESPEC
-#define _TIMESPEC
+#ifndef _STRUCT_TIMESPEC/*_TIMESPEC*/ /* FIXME */
+#define _STRUCT_TIMESPEC/*_TIMESPEC*/
 struct timespec {
 	time_t tv_sec;
 	long   tv_nsec;

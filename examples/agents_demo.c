@@ -26,7 +26,7 @@
 #include "engine/engine.h"
 #include "game/agents.h"
 #include "math/geometry.h"
-#include "render/color.h"
+#include "vg/vg_color.h"
 #include "render/pluto/plutovg-private.h"
 #include "render/pluto/plutovg.h"
 #include "render/render_utils.h"
@@ -98,11 +98,11 @@ void preload(engine_t *eng)
 	eng->data = paras.surface->data;
 
 	{ /* load font */
-		char *consola_font_file_path = "../assets/fonts/consola.ttf";
+		char *font_file_path = "../assets/fonts/consola.ttf";
 #ifdef __EMSCRIPTEN__
 		consola_font_file_path = "consola.ttf";
 #endif
-		paras.font = plutovg_font_load_from_file(consola_font_file_path, 18);
+		paras.font = plutovg_font_load_from_file(font_file_path, 18);
 		plutovg_set_font(paras.vg, paras.font);
 	}
 

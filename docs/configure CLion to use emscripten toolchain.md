@@ -51,12 +51,12 @@ set_target_properties(executable PROPERTIES LINK_FLAGS "\
     -o index.html\
     -sALLOW_MEMORY_GROWTH=1 -sUSE_GLFW=3 -sUSE_WEBGL2 -sFULL_ES3\
     --shell-file ../sources/core/external/emscripten_html_template.html\
-    --preload-file ../assets/fonts/consola.ttf@consola.ttf")
+    --preload_-file ../assets/fonts/consola.ttf@consola.ttf")
 ```
 
 `--shell-file` option allow you to use a template HTML files.
 
-`--preload-file` will generate a `.data` file to contain all the file you specified the mapping.
+`--preload_-file` will generate a `.data` file to contain all the file you specified the mapping.
 
 ### CMake options: 
 set a path variable ```${EMSCRIPTEN_ROOT}``` in CLion. 

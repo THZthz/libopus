@@ -134,7 +134,7 @@ On *:Unload: { hfree NickNames }
 alias -l ialupdateCheck {
   inc -z $+(%,ialupdateCheck,$network) $calc($nick($1,0) / 4)
   ;If your ial is already being updated on join .who $1 out.
-  ;If you are using /names to update ial you will still need this line.
+  ;If you are using /names to update_ ial you will still need this line.
   .who $1
 }
 Raw 352:*: {

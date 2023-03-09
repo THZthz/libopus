@@ -22,16 +22,17 @@ extern "C" {
 #include <stdint.h>
 #include <stdio.h>
 
-#define ANN_ACTIVATION ann_sigmoid_
-#define ANN_DERIVATION ann_sigmoid_derivation_
-#define ANN_COST ann_cost_
-#define ANN_COST_DERIVATION ann_cost_derivation_
+#include "math/math.h"
 
-typedef struct ann ann_t;
-typedef double     ann_real;
+#define OPUS_ANN_ACTIVATION ann_sigmoid_
+#define OPUS_ANN_DERIVATION ann_sigmoid_derivation_
+#define OPUS_ANN_COST ann_cost_
+#define OPUS_ANN_COST_DERIVATION ann_cost_derivation_
 
-typedef ann_real (*ann_activation_cb)(ann_real v);
-typedef ann_real (*ann_activation_derivation_cb)(ann_real v);
+typedef struct opus_ann opus_ann;
+
+typedef opus_real (*opus_ann_activation_cb)(opus_real v);
+typedef opus_real (*opus_ann_activation_derivation_cb)(opus_real v);
 
 /*
  * The neurons are arranged this:
@@ -53,34 +54,34 @@ typedef ann_real (*ann_activation_derivation_cb)(ann_real v);
  *
  *
  */
-struct ann {
-	uint32_t  n_layer_, n_input_, n_output_, n_neuron_;
-	uint32_t *nmap_;  /* neuron count of each layer */
-	uint32_t *tnmap_; /* total neurons count before the layer, does not contain bias neuron(which is added automatically) */
-	uint32_t *wmap_;  /* total weights count before the layer, count the link of bias neuron */
-	ann_real *weights;
-	ann_real *outputs_; /* the output value of each neuron */
-	ann_real *errors_; /* used for back propagation */
+struct opus_ann {
+	uint32_t   n_layer_, n_input_, n_output_, n_neuron_;
+	uint32_t  *nmap_;  /* neuron count of each layer */
+	uint32_t  *tnmap_; /* total neurons count before the layer, does not contain bias neuron(which is added automatically) */
+	uint32_t  *wmap_;  /* total weights count before the layer, count the link of bias neuron */
+	opus_real *weights;
+	opus_real *outputs_; /* the output value of each neuron */
+	opus_real *errors_;  /* used for back propagation */
 };
 
-ann_t *ann_init(ann_t *net, uint32_t n_layer, const uint32_t *nmap);
-ann_t *ann_create(uint32_t n_layer, const uint32_t *nmap);
-void   ann_done(ann_t *net);
-void   ann_destroy(ann_t *net);
+opus_ann *opus_ann_init(opus_ann *net, uint32_t n_layer, const uint32_t *nmap);
+opus_ann *opus_ann_create(uint32_t n_layer, const uint32_t *nmap);
+void      opus_ann_done(opus_ann *net);
+void      opus_ann_destroy(opus_ann *net);
 
-void      ann_randomize(ann_t *net);
-ann_real *ann_get_weights(ann_t *net, uint32_t l, uint32_t n);
-void      ann_set_input(ann_t *net, const ann_real *input_data);
-ann_real *ann_get_output(ann_t *net);
-void      ann_feed_forward(ann_t *net);
-void      ann_back_propagate(ann_t *net, const ann_real *target_outputs, ann_real learning_rate);
-ann_real *ann_predict(ann_t *net, const ann_real *input);
-void      ann_learn(ann_t *net, const ann_real *input, const ann_real *target_output, ann_real learning_rate);
+void       opus_ann_randomize(opus_ann *net);
+opus_real *opus_ann_get_weights(opus_ann *net, uint32_t l, uint32_t n);
+void       opus_ann_set_input(opus_ann *net, const opus_real *input_data);
+opus_real *opus_ann_get_output(opus_ann *net);
+void       opus_ann_feed_forward(opus_ann *net);
+void       opus_ann_back_propagate(opus_ann *net, const opus_real *target_outputs, opus_real learning_rate);
+opus_real *opus_ann_predict(opus_ann *net, const opus_real *input);
+void       opus_ann_learn(opus_ann *net, const opus_real *input, const opus_real *target_output, opus_real learning_rate);
 
-ann_t *ann_get_copy(ann_t *net);
-void   ann_save(ann_t *net, FILE *out);
-ann_t *ann_load(FILE *in);
-void   ann_console(ann_t *net);
+opus_ann *opus_ann_get_copy(opus_ann *net);
+void      opus_ann_save(opus_ann *net, FILE *out);
+opus_ann *opus_ann_load(FILE *in);
+void      opus_ann_console(opus_ann *net);
 
 #ifdef __cplusplus
 };

@@ -8,11 +8,11 @@
  * @example to use this library, simply follow a template:
  * 		// (xo, yo): origin, (xd, yd): destination
  * 		bresenham_data_t data;
- * 		bresenham_line_init(xo, yo, xd, yd, &data);
+ * 		opus_bresenham_init(xo, yo, xd, yd, &data);
  * 		do {
  * 			// do something with (xo, yo)
  * 			// ...
- * 		} while (!bresenham_line_step(&xo, &yo, &data));
+ * 		} while (!opus_bresenham_step(&xo, &yo, &data));
  */
 #ifndef BRESENHAM_H
 #define BRESENHAM_H
@@ -20,7 +20,7 @@
 /**
  *  @brief A struct used for computing a bresenham line.
  */
-typedef struct bresenham_data {
+typedef struct opus_bresenham {
 	int step_x;
 	int step_y;
 	int e;
@@ -30,9 +30,9 @@ typedef struct bresenham_data {
 	int orig_y;
 	int dest_x;
 	int dest_y;
-} bresenham_data_t;
+} opus_bresenham_data;
 
-void bresenham_line_init(int x_from, int y_from, int x_to, int y_to, bresenham_data_t* data);
-int  bresenham_line_step(int* cur_x, int* cur_y, bresenham_data_t* data);
+void opus_bresenham_init(int x_from, int y_from, int x_to, int y_to, opus_bresenham_data* data);
+int  opus_bresenham_step(int* cur_x, int* cur_y, opus_bresenham_data* data);
 
 #endif /* BRESENHAM_H */

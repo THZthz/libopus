@@ -63,7 +63,7 @@ avltree_node_t *avltree_node_prev(avltree_node_t *node);
 
 void avltree_node_replace(avltree_node_t *victim, avltree_node_t *newnode, struct avltree_root *root);
 
-static INLINE void avl_node_link(avltree_node_t *node, avltree_node_t *parent, avltree_node_t **avl_link)
+static OPUS_INLINE void avl_node_link(avltree_node_t *node, avltree_node_t *parent, avltree_node_t **avl_link)
 {
 	node->parent = parent;
 	node->height = 0;

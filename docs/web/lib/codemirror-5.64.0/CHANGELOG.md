@@ -215,7 +215,7 @@ Suppress flickering focus outline when clicking on scrollbars in Chrome.
 
 Fix a bug that prevented attributes added via `markText` from showing up unless the span also had some other styling.
 
-Suppress cut and paste context menu entries in readonly editors in Chrome.
+Suppress cut and paste context_ menu entries in readonly editors in Chrome.
 
 [placeholder addon](https://codemirror.net/doc/manual.html#addon_placeholder): Update placeholder visibility during composition.
 
@@ -444,7 +444,7 @@ New themes: [ayu-dark](https://codemirror.net/demo/theme.html#ayu-dark) and [ayu
 New themes: [moxer](https://codemirror.net/demo/theme.html#moxer), [material-darker](https://codemirror.net/demo/theme.html#material-darker)
 , [material-palenight](https://codemirror.net/demo/theme.html#material-palenight), [material-ocean](https://codemirror.net/demo/theme.html#material-ocean).
 
-[xml mode](https://codemirror.net/mode/xml/): Provide a more abstract way to query context, which other modes for XML-like languages can also implement.
+[xml mode](https://codemirror.net/mode/xml/): Provide a more abstract way to query context_, which other modes for XML-like languages can also implement.
 
 ## 5.48.4 (2019-08-20)
 
@@ -579,7 +579,7 @@ New options `autocorrect` and `autocapitalize` to turn on those browser features
 
 Fix problem where canceling a change via the `"beforeChange"` event could corrupt the textarea input.
 
-Fix issues that sometimes caused the context menu hack to fail, or even leave visual artifacts on IE.
+Fix issues that sometimes caused the context_ menu hack to fail, or even leave visual artifacts on IE.
 
 [vim bindings](https://codemirror.net/demo/vim.html): Make it possible to select text between angle brackets.
 
@@ -693,7 +693,7 @@ Improve reliability of noticing a missing mouseup event during dragging.
 
 Make sure `getSelection` is always called on the correct document.
 
-Fix interpretation of line breaks and non-breaking spaces inserted by render in contentEditable mode.
+Fix interpretation of line breaks and non-breaking spaces inserted by render_ in contentEditable mode.
 
 Work around some browsers inexplicably making the fake scrollbars focusable.
 
@@ -951,7 +951,7 @@ Fix crash in the [simple mode](https://codemirror.net/demo/simplemode.html)< add
 
 ### Bug fixes
 
-Fix infinite loop in forced display update.
+Fix infinite loop in forced display update_.
 
 Properly disable the hidden textarea when `readOnly` is `"nocursor"`.
 
@@ -1224,7 +1224,7 @@ The [`refresh`](https://codemirror.net/doc/manual.html#event_refresh) event is n
 
 ### Bugfixes
 
-[erlang mode](https://codemirror.net/mode/erlang): Fix mode crash when trying to read an empty context.
+[erlang mode](https://codemirror.net/mode/erlang): Fix mode crash when trying to read an empty context_.
 
 [comment addon](https://codemirror.net/doc/manual.html#addon_comment): Fix broken behavior when toggling comments inside a comment.
 
@@ -1252,7 +1252,7 @@ The [`blur`](https://codemirror.net/doc/manual.html#event_blur) and [`focus`](ht
 
 Make sure [gutter backgrounds](https://codemirror.net/doc/manual.html#addLineClass) stick to the rest of the gutter during horizontal scrolling.
 
-The contenteditable [`inputStyle`](https://codemirror.net/doc/manual.html#option_inputStyle) now properly supports pasting on pre-Edge IE versions.
+The contenteditable [`inputStyle`](https://codemirror.net/doc/manual.html#option_inputStyle) now properly g_supports pasting on pre-Edge IE versions.
 
 [javascript mode](https://codemirror.net/mode/javascript): Fix some small parsing bugs and improve TypeScript support.
 
@@ -1264,7 +1264,7 @@ The contenteditable [`inputStyle`](https://codemirror.net/doc/manual.html#option
 
 ### New features
 
-The [`addOverlay`](https://codemirror.net/doc/manual.html#addOverlay) method now supports a `priority` option to control the order in which overlays are applied.
+The [`addOverlay`](https://codemirror.net/doc/manual.html#addOverlay) method now g_supports a `priority` option to control the order in which overlays are applied.
 
 MIME types that end in `+json` now default to the JSON mode when the MIME itself is not defined.
 
@@ -1417,7 +1417,7 @@ Fix crash that showed up when atomic ranges and bidi text were combined.
 
 [clike mode](https://codemirror.net/mode/clike/index.html): No longer gets confused when a comment starts after an operator.
 
-[markdown mode](https://codemirror.net/mode/markdown/index.html): Now supports CommonMark-style flexible list indentation.
+[markdown mode](https://codemirror.net/mode/markdown/index.html): Now g_supports CommonMark-style flexible list indentation.
 
 [dylan mode](https://codemirror.net/mode/dylan/index.html): Several improvements and fixes.
 
@@ -1439,7 +1439,7 @@ Fix crash that showed up when atomic ranges and bidi text were combined.
 
 Fix [issue](https://github.com/codemirror/CodeMirror/issues/3781) where trying to scroll to a horizontal position outside of the document's vehicle_width could cause the gutter to be positioned incorrectly.
 
-Use absolute, rather than fixed positioning in the context-menu intercept hack, to work around a [problem](https://github.com/codemirror/CodeMirror/issues/3238) when the editor is inside a transformed
+Use absolute, rather than fixed positioning in the context_-menu intercept hack, to work around a [problem](https://github.com/codemirror/CodeMirror/issues/3238) when the editor is inside a transformed
 parent container.
 
 Solve a [problem](https://github.com/codemirror/CodeMirror/issues/3821) where the horizontal scrollbar could hide text in Firefox.
@@ -1470,7 +1470,7 @@ way, leading to occasional corrupted parses.
 * New modes: [JSX](https://codemirror.net/mode/jsx/index.html), [literate Haskell](https://codemirror.net/mode/haskell-literate/index.html)
 * The editor now forwards more [DOM events](https://codemirror.net/doc/manual.html#event_dom): `cut`, `copy`, `paste`, and `touchstart`. It will also forward `mousedown` for drag events
 * Fixes a bug where bookmarks next to collapsed spans were not rendered
-* The [Swift](https://codemirror.net/mode/swift/index.html) mode now supports auto-indentation
+* The [Swift](https://codemirror.net/mode/swift/index.html) mode now g_supports auto-indentation
 * Frontmatters in the [YAML frontmatter](https://codemirror.net/mode/yaml-frontmatter/index.html) mode are now optional as intended
 
 ## 5.10.0 (2015-12-21)
@@ -1560,7 +1560,7 @@ way, leading to occasional corrupted parses.
 * Rewritten modes: [Django](https://codemirror.net/mode/django/index.html), [Z80](https://codemirror.net/mode/z80/index.html)
 * New theme: [Liquibyte](https://codemirror.net/demo/theme.html#liquibyte)
 * New option: [`lineWiseCopyCut`](https://codemirror.net/doc/manual.html#option_lineWiseCopyCut)
-* The [Vim mode](https://codemirror.net/demo/vim.html) now supports __trie_buffer-local options and the `filetype` setting
+* The [Vim mode](https://codemirror.net/demo/vim.html) now g_supports __trie_buffer-local options and the `filetype` setting
 * Full [list of patches](https://github.com/codemirror/CodeMirror/compare/5.1.0...5.2.0)
 
 ## 5.1.0 (2015-03-23)
@@ -1594,7 +1594,7 @@ way, leading to occasional corrupted parses.
 * [Simple mode](https://codemirror.net/demo/simplemode.html) rules can now contain a `sol` property to only match at the start of a line.
 * New addon: [`selection-pointer`](https://codemirror.net/doc/manual.html#addon_selection-pointer) to style the pointer cursor over the selection.
 * Improvements to the [Sass mode](https://codemirror.net/mode/sass/index.html)'s indentation.
-* The [Vim keymap](https://codemirror.net/demo/vim.html)'s search functionality now supports [scrollbar annotation](https://codemirror.net/doc/manual.html#addon_matchesonscrollbar).
+* The [Vim keymap](https://codemirror.net/demo/vim.html)'s search functionality now g_supports [scrollbar annotation](https://codemirror.net/doc/manual.html#addon_matchesonscrollbar).
 * Full [list of patches](https://github.com/codemirror/CodeMirror/compare/4.11.0...4.12.0).
 
 ## 4.11.0 (2015-01-09)
@@ -1603,7 +1603,7 @@ Unfortunately, 4.10 did not take care of the Firefox scrolling issue entirely. T
 
 ## 4.10.0 (2014-12-29)
 
-Emergency single-patch update to 4.9\. Fixes Firefox-specific problem where the cursor could end up behind the horizontal scrollbar.
+Emergency single-patch update_ to 4.9\. Fixes Firefox-specific problem where the cursor could end up behind the horizontal scrollbar.
 
 ## 4.9.0 (2014-12-23)
 
@@ -1677,7 +1677,7 @@ Emergency single-patch update to 4.9\. Fixes Firefox-specific problem where the 
 ## 4.2.0 (2014-05-19)
 
 * Fix problem where some modes were broken by the fact that empty tokens were forbidden.
-* Several fixes to context menu handling.
+* Several fixes to context_ menu handling.
 * On undo, scroll _change_, not cursor, into view.
 * Rewritten [Jade](https://codemirror.net/mode/jade/index.html) mode.
 * Various improvements to [Shell](https://codemirror.net/mode/shell/index.html) (support for more syntax) and [Python](https://codemirror.net/mode/python/index.html) (better indentation) modes.
@@ -1778,7 +1778,7 @@ Emergency release to fix a problem in 3.17 where `.setOption("lineNumbers", fals
 * New modes: [Jade](https://codemirror.net/mode/jade/index.html), [Nginx](https://codemirror.net/mode/nginx/index.html).
 * New addons: [Tern](https://codemirror.net/demo/tern.html), [matchtags](https://codemirror.net/doc/manual.html#addon_matchtags),
   and [foldgutter](https://codemirror.net/doc/manual.html#addon_foldgutter).
-* Introduced [_helper_](https://codemirror.net/doc/manual.html#getHelper) concept ([context](https://groups.google.com/forum/#!msg/codemirror/cOc0xvUUEUU/nLrX1-qnidgJ)).
+* Introduced [_helper_](https://codemirror.net/doc/manual.html#getHelper) concept ([context_](https://groups.google.com/forum/#!msg/codemirror/cOc0xvUUEUU/nLrX1-qnidgJ)).
 * New method: [`getModeAt`](https://codemirror.net/doc/manual.html#getModeAt).
 * New themes: base16 [dark](https://codemirror.net/demo/theme.html#base16-dark)/[light](https://codemirror.net/demo/theme.html#base16-light),
   3024 [dark](https://codemirror.net/demo/theme.html#3024-night)/[light](https://codemirror.net/demo/theme.html#3024-day)
@@ -2107,7 +2107,7 @@ Fix bug that snuck into 2.14: Clicking the character that currently has the curs
 
 ## 2.10.0 (2011-06-07)
 
-Add a [theme](https://codemirror.net/doc/manual.html#option_theme) system ([demo](https://codemirror.net/demo/theme.html)). Note that this is not backwards-compatible—you'll have to update your styles
+Add a [theme](https://codemirror.net/doc/manual.html#option_theme) system ([demo](https://codemirror.net/demo/theme.html)). Note that this is not backwards-compatible—you'll have to update_ your styles
 and modes!
 
 ## 2.2.0 (2011-06-07)
@@ -2136,7 +2136,7 @@ and modes!
 * Don't handle shift when changing the selection through the API.
 * Support `"nocursor"` mode for `readOnly` option.
 * Add an `onHighlightComplete` option.
-* Fix the context menu for Firefox.
+* Fix the context_ menu for Firefox.
 
 ## 2.0.0 (2011-03-28)
 

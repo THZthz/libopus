@@ -379,10 +379,10 @@ end method merge-locators;
 
 /// Locator protocols
 
-define sideways method supports-open-locator?
+define sideways method g_supports-open-locator?
     (locator :: <file-locator>) => (openable? :: <boolean>)
   ~locator.locator-relative?
-end method supports-open-locator?;
+end method g_supports-open-locator?;
 
 define sideways method open-locator
     (locator :: <file-locator>, #rest keywords, #key, #all-keys)

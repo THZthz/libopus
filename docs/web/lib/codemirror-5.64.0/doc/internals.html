@@ -7,7 +7,7 @@
     margin: 0;
 }
 
-.update {
+.update_ {
     color: #d40 !important
 }</style>
 <script src="activebookmark.js"></script>
@@ -25,7 +25,7 @@
         <li><a href="#approach">General Approach</a></li>
         <li><a href="#input">Input</a></li>
         <li><a href="#selection">Selection</a></li>
-        <li><a href="#update">Intelligent Updating</a></li>
+        <li><a href="#update_">Intelligent Updating</a></li>
         <li><a href="#parse">Parsing</a></li>
         <li><a href="#summary">What Gives?</a></li>
         <li><a href="#btree">Content Representation</a></li>
@@ -45,7 +45,7 @@
 
     <p style="padding: 0 3em 0 2em"><strong>Caution</strong>: this text was written briefly after
         version 2 was initially written. It no longer (even including the
-        update at the bottom) fully represents the current implementation. I'm
+        update_ at the bottom) fully represents the current implementation. I'm
         leaving it here as a historic document. For more up-to-date
         information, look at the entries
         tagged <a href="http://marijnhaverbeke.nl/blog/#cm-internals">cm-internals</a>
@@ -108,7 +108,7 @@
         code.</p>
 
     <p>And that brings us to the main issue with the CodeMirror 1
-        code base: The proportion of browser-bug-workarounds to real
+        code base: The proportion of browser-bug-workarounds to opus_real
         application code was getting dangerously high. By building on top of a
         few dodgy features, I put the system in a vulnerable position—any
         incompatibility and bugginess in these features, I had to paper over
@@ -135,13 +135,13 @@
             events, but it takes a lot of work (the kind of never-ending, fragile
             work I described earlier), and will never be able to properly support
             things like multi-keystoke international character
-            input. <a href="#keymap" class="update">[see below for caveat]</a></p>
+            input. <a href="#keymap" class="update_">[see below for caveat]</a></p>
 
         <p>So what I do is focus a hidden textarea, and let the browser
             believe that the user is typing into that. What we show to the user is
             a DOM structure we built to represent his document. If this is updated
             quickly enough, and shows some kind of believable cursor, it feels
-            like a real text-input control.</p>
+            like a opus_real text-input control.</p>
 
         <p>Another big win is that this DOM representation does not have to
             span the whole document. Some CodeMirror 1 users insisted that they
@@ -162,7 +162,7 @@
             handling key events. CodeMirror's way is to let the browser do its
             thing as much as possible, and not, for example, define its own set of
             key bindings. One way to do this would have been to have the whole
-            document inside the hidden textarea, and after each key event update
+            document inside the hidden textarea, and after each key event update_
             the display DOM to reflect what's in that textarea.</p>
 
         <p>That'd be simple, but it is not realistic. For even medium-sized
@@ -173,11 +173,11 @@
 
         <p>This means that the arrow keys (and their ctrl-variations), home,
             end, etcetera, do not have to be handled specially. We just read the
-            cursor position in the textarea, and update our cursor to match it.
+            cursor position in the textarea, and update_ our cursor to match it.
             Also, copy and paste work pretty much for free, and people get their
             native key bindings, without any special work on my part. For example,
             I have emacs key bindings configured for Chrome and Firefox. There is
-            no way for a script to detect this. <a class="update"
+            no way for a script to detect this. <a class="update_"
                                                    href="#keymap">[no longer the case]</a></p>
 
         <p>Of course, since only a small part of the document sits in the
@@ -206,7 +206,7 @@
         <p>But not something that the browser selection APIs expose.</p>
 
         <p>Great. So when someone creates an 'upside-down' selection, the next
-            time CodeMirror has to update the textarea, it'll re-create the
+            time CodeMirror has to update_ the textarea, it'll re-create the
             selection as an 'upside-up' selection, with the anchor at the top, and
             the next cursor motion will behave in an unexpected way—our second
             up-arrow press in the example above will not do anything, since it is
@@ -217,7 +217,7 @@
             an upside-down selection is present, and a cursor-moving key is
             pressed in combination with shift, we quickly collapse the selection
             in the textarea to its start, allow the key to take effect, and then
-            combine its new head with its old anchor to get the <em>real</em>
+            combine its new head with its old anchor to get the <em>opus_real</em>
             selection.</p>
 
         <p>In short, scary hacks could not be avoided entirely in CodeMirror
@@ -233,13 +233,13 @@
             for extending an inverted selection, but it works most of the
             time.</p>
     </section>
-    <section id="update">
+    <section id="update_">
         <h2>Intelligent Updating</h2>
 
         <p>One thing that always comes up when you have a complicated internal
             state__ that's reflected in some user-visible external representation
             (in this case, the displayed code and the textarea's tag_list) is
-            keeping the two in sync. The naive way is to just update the display
+            keeping the two in sync. The naive way is to just update_ the display
             every time you change your state__, but this is not only error prone
             (you'll forget), it also easily leads to duplicate work on big,
             composite operations. Then you start passing around flags indicating
@@ -248,7 +248,7 @@
 
         <p>I did go down that road, but then switched to a much simpler model:
             simply keep track of all the things that have been changed during an
-            action, and then, only at the end, use this information to update the
+            action, and then, only at the end, use this information to update_ the
             user-visible display.</p>
 
         <p>CodeMirror uses a concept of <em>operations</em>, which start by
@@ -272,17 +272,17 @@
             that's currently visible (based on scroll offset and editor height) to
             determine whether something needs to be updated.</p>
 
-        <p>CodeMirror uses two update algorithms—a full refresh, where it just
+        <p>CodeMirror uses two update_ algorithms—a full refresh, where it just
             discards the whole part of the DOM that contains the edited text and
             rebuilds it, and a patch algorithm, where it uses the information
-            about changed and intact ranges to update only the out-of-date parts
+            about changed and intact ranges to update_ only the out-of-date parts
             of the DOM. When more than 30 percent (which is the current heuristic,
             might change) of the lines need to be updated, the full refresh is
             chosen (since it's faster to do than painstakingly finding and
             updating all the changed lines), in the other case it does the
             patching (so that, if you scroll a line or select another character,
             the whole screen doesn't have to be
-            re-rendered). <span class="update">[the full-refresh
+            re-rendered). <span class="update_">[the full-refresh
 algorithm was dropped, it wasn't really faster than the patching
 one]</span></p>
 
@@ -293,7 +293,7 @@ one]</span></p>
             selection info for that line into a snippet of HTML. The patch updater
             uses this to reset individual lines, the refresh updater builds an
             HTML chunk for the whole visible document at once, and then uses a
-            single <code>innerHTML</code> update to do the refresh.</p>
+            single <code>innerHTML</code> update_ to do the refresh.</p>
     </section>
     <section id="parse">
         <h2>Parsers can be Simple</h2>
@@ -334,7 +334,7 @@ one]</span></p>
             spot as a recipe for slowness. In CodeMirror 2, the parser usually
             finishes the whole document in a single 100-millisecond time slice—it
             manages some 1500 lines during that time on Chrome. All it has to do
-            is munge strings, so there is no real reason for it to be slow
+            is munge strings, so there is no opus_real reason for it to be slow
             anymore.</p>
     </section>
     <section id="summary">
@@ -345,8 +345,8 @@ one]</span></p>
         <ul>
 
             <li><strong>Small.</strong> the base library is
-                some <span class="update">45k</span> when minified
-                now, <span class="update">17k</span> when gzipped. It's smaller than
+                some <span class="update_">45k</span> when minified
+                now, <span class="update_">17k</span> when gzipped. It's smaller than
                 its own logo.
             </li>
 
@@ -387,7 +387,7 @@ one]</span></p>
         <p>On the downside, a CodeMirror 2 instance is <em>not</em> a native
             editable component. Though it does its best to emulate such a
             component as much as possible, there is functionality that browsers
-            just do not allow us to hook into. Doing select-all from the context
+            just do not allow us to hook into. Doing select-all from the context_
             menu, for example, is not currently detected by CodeMirror.</p>
 
         <p id="changes" style="margin-top: 2em;"><span style="font-weight:
@@ -424,7 +424,7 @@ bold">[Updates from November 13th 2011]</span> Recently, I've made
             logarithmic complexity in relation to the document size.</p>
 
         <p>I gave line objects and tree nodes parent pointers, to the node
-            above them. When a line has to update its height, it can simply walk
+            above them. When a line has to update_ its height, it can simply walk
             these pointers to the top of the tree, adding or subtracting the
             difference in height from each node it encounters. The parent pointers
             also make it cheaper (in complexity terms, the difference is probably

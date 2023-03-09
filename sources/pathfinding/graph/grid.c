@@ -13,8 +13,8 @@
  */
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "pathfinding/graph.h"
 
@@ -39,14 +39,15 @@ static int neighbor_offset[8][2] = {{0, -1}, {1, 0}, {0, 1}, {-1, 0}, {-1, -1}, 
 
 static graph_status_t create_context(graph_t *graph, void **args)
 {
-	int           mode_01        = *(int *) args[0];
-	int           allow_diagonal = *(int *) args[1];
-	double        x              = *(double *) args[2];
-	double        y              = *(double *) args[3];
-	double        tile_w         = *(double *) args[4];
-	double        tile_h         = *(double *) args[5];
-	graph_count_t count_w        = *(graph_count_t *) args[6];
-	graph_count_t count_h        = *(graph_count_t *) args[7];
+	int    mode_01        = *(int *) args[0];
+	int    allow_diagonal = *(int *) args[1];
+	double x              = *(double *) args[2];
+	double y              = *(double *) args[3];
+	double tile_w         = *(double *) args[4];
+	double tile_h         = *(double *) args[5];
+
+	graph_count_t count_w = *(graph_count_t *) args[6];
+	graph_count_t count_h = *(graph_count_t *) args[7];
 
 	context_t *context;
 
@@ -201,9 +202,11 @@ static graph_weight_t get_estimated_cost_by_id(graph_t *graph, graph_id_t from, 
 
 	/* use Manhattan Heuristic */
 	if (sx > ex) sx = sx - ex;
-	else sx = ex - sx;
+	else
+		sx = ex - sx;
 	if (sy > ey) sy = sy - ey;
-	else sy = ey - sy;
+	else
+		sy = ey - sy;
 	return (graph_weight_t) (sx + sy);
 }
 
@@ -220,7 +223,7 @@ graph_t *graph_grid_create(int mode_01, int allow_diagonal, double x, double y, 
 	        NULL, NULL, NULL, NULL,
 	        get_arc_weight, get_arc_weight_by_id, set_arc_weight, set_arc_weight_by_id, NULL,
 	        get_neighbors, get_neighbors_by_id, get_neighbors_array, get_neighbors_array_by_id,
-			get_estimated_cost, get_estimated_cost_by_id};
+	        get_estimated_cost, get_estimated_cost_by_id};
 	graph_t *graph;
 
 	graph = (graph_t *) malloc(sizeof(graph_t));

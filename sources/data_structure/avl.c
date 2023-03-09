@@ -55,7 +55,7 @@ avltree_node_t *avltree_node_prev(avltree_node_t *node)
 	return node;
 }
 
-static INLINE void
+static OPUS_INLINE void
 _avl_child_replace(avltree_node_t *oldnode, avltree_node_t *newnode,
                    avltree_node_t *parent, struct avltree_root *root)
 {
@@ -69,7 +69,7 @@ _avl_child_replace(avltree_node_t *oldnode, avltree_node_t *newnode,
 	}
 }
 
-static INLINE avltree_node_t *
+static OPUS_INLINE avltree_node_t *
 _avltree_node_rotate_left(avltree_node_t *node, struct avltree_root *root)
 {
 	avltree_node_t *right  = node->right;
@@ -85,7 +85,7 @@ _avltree_node_rotate_left(avltree_node_t *node, struct avltree_root *root)
 	return right;
 }
 
-static INLINE avltree_node_t *
+static OPUS_INLINE avltree_node_t *
 _avltree_node_rotate_right(avltree_node_t *node, struct avltree_root *root)
 {
 	avltree_node_t *left   = node->left;
@@ -119,12 +119,12 @@ void avltree_node_replace(avltree_node_t *victim, avltree_node_t *newnode,
 /* avl - node manipulation                                            */
 /*--------------------------------------------------------------------*/
 
-static INLINE int AVL_MAX(int x, int y)
+static OPUS_INLINE int AVL_MAX(int x, int y)
 {
 	return (x < y) ? y : x;
 }
 
-static INLINE void
+static OPUS_INLINE void
 _avltree_node_height_update(avltree_node_t *node)
 {
 	int h0       = AVL_LEFT_HEIGHT(node);
@@ -132,7 +132,7 @@ _avltree_node_height_update(avltree_node_t *node)
 	node->height = AVL_MAX(h0, h1) + 1;
 }
 
-static INLINE avltree_node_t *
+static OPUS_INLINE avltree_node_t *
 _avltree_node_fix_l(avltree_node_t *node, struct avltree_root *root)
 {
 	avltree_node_t *right = node->right;
@@ -152,7 +152,7 @@ _avltree_node_fix_l(avltree_node_t *node, struct avltree_root *root)
 	return node;
 }
 
-static INLINE avltree_node_t *
+static OPUS_INLINE avltree_node_t *
 _avltree_node_fix_r(avltree_node_t *node, struct avltree_root *root)
 {
 	avltree_node_t *left = node->left;
@@ -172,7 +172,7 @@ _avltree_node_fix_r(avltree_node_t *node, struct avltree_root *root)
 	return node;
 }
 
-static INLINE void
+static OPUS_INLINE void
 _avltree_node_rebalance(avltree_node_t *node, struct avltree_root *root)
 {
 	while (node) {

@@ -27,7 +27,7 @@ uint64_t hashmap_simple_hash(hashmap_t *map, void *key, int count)
 	return hash;
 }
 
-INLINE void hashmap_mm86128_internal(const void *key, const int count, uint32_t seed, void *out)
+OPUS_INLINE void hashmap_mm86128_internal(const void *key, const int count, uint32_t seed, void *out)
 {
 #define ROTL32(x, r) (((x) << (r)) | ((x) >> (32 - (r))))
 #define FMIX32(h)      \
@@ -187,7 +187,7 @@ uint64_t hashmap_murmur(const void *data, uint64_t count, uint64_t seed0, uint64
  * @param desired_capacity
  * @return
  */
-INLINE uint64_t hashmap_get_proper_capacity(uint64_t desired_capacity)
+OPUS_INLINE uint64_t hashmap_get_proper_capacity(uint64_t desired_capacity)
 {
 	uint64_t n_cap = 16;
 	if (desired_capacity < n_cap) {
@@ -260,30 +260,30 @@ hashmap_t *hashmap_create(uint64_t ele_size, uint64_t capacity, uint64_t seed0, 
 	return hashmap_init(map, ele_size, capacity, seed0, seed1, compare, hash, ele_free);
 }
 
-INLINE uint64_t hashmap_bucket_idx_(hashmap_t *map, uint64_t hash_value)
+OPUS_INLINE uint64_t hashmap_bucket_idx_(hashmap_t *map, uint64_t hash_value)
 {
 	/* If the implementation is changed to allow a non-power-of-2 bucket count, */
 	/* the line below should be changed to use mod instead of AND */
 	return hash_value & map->mask_;
 }
 
-INLINE _bucket_t *hashmap_bucket_at_(hashmap_t *map, void *buckets, uint64_t i)
+OPUS_INLINE _bucket_t *hashmap_bucket_at_(hashmap_t *map, void *buckets, uint64_t i)
 {
 	return (_bucket_t *) ((char *) buckets + i * map->bucket_size);
 }
 
-INLINE void *hashmap_bucket_data_(_bucket_t *bucket)
+OPUS_INLINE void *hashmap_bucket_data_(_bucket_t *bucket)
 {
 	return (void *) ((char *) bucket + sizeof(_bucket_t));
 }
 
-INLINE uint64_t hashmap_get_hash_(hashmap_t *map, void *ele)
+OPUS_INLINE uint64_t hashmap_get_hash_(hashmap_t *map, void *ele)
 {
 	/* clear the 16 bits of the left of the hashed value(for the sake of psl) */
 	return map->hash_cb_(map, ele, map->seed0, map->seed1, map->user_data) << 16 >> 16;
 }
 
-INLINE uint64_t hashmap_next_probe_sequence_(hashmap_t *map, uint64_t cur_idx, void *ele)
+OPUS_INLINE uint64_t hashmap_next_probe_sequence_(hashmap_t *map, uint64_t cur_idx, void *ele)
 {
 	/* simple linear probe */
 	return hashmap_bucket_idx_(map, cur_idx + 1);

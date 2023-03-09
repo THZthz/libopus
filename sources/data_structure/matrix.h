@@ -18,6 +18,8 @@
 extern "C" {
 #endif /* __cplusplus */
 
+#define matrix_cell_type(cell_type, matrix, x, y) ((cell_type *) matrix_cell((matrix), (x), (y)))
+
 typedef struct matrix matrix_t;
 
 struct matrix {

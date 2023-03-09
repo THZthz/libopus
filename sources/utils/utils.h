@@ -19,13 +19,13 @@ extern "C" {
 #endif /* __cplusplus */
 
 #ifndef __STDC_VERSION__
-#define UTILS_C90
+#define OPUS_C90
 #elif __STDC_VERSION__ == 199901L
-#define UTILS_C99
+#define OPUS_C99
 #elif __STDC_VERSION__ == 201112L
-#define UTILS_C11
+#define OPUS_C11
 #else
-#define UTILS_C_UNKNOWN
+#define OPUS_C_UNKNOWN
 #endif
 
 #include <assert.h>
@@ -36,41 +36,35 @@ extern "C" {
 #include <stdlib.h>
 #include <string.h>
 
-#define TO_STRING(v) TO_STRING__(v)
-#define TO_STRING__(v) #v
-#define DO_NOTHING() \
+#define OPUS_RETURN_IF(ret, cond) if (cond) return ret
+#define OPUS_TO_STRING_(v) OPUS_TO_STRING__(v)
+#define OPUS_TO_STRING__(v) #v
+#define OPUS_DO_NOTHING_() \
 	do {             \
 		for (; 0;)   \
 			;        \
 	} while (0)
 
-#ifdef ERROR_
-#undef ERROR
-#endif
-
 /* clang-format off */
 #ifdef _NDEBUG
-#define ASSERT(cond)
-#define INFO
-#define ERROR
-#define WARNING
-#define NOT_NULL
-#define VALIDATE(code)
+#define OPUS_ASSERT(cond)
+#define OPUS_INFO
+#define OPUS_ERROR
+#define OPUS_WARNING
+#define OPUS_NOT_NULL
 #else
-#define ASSERT(C) assert(C)
-/*#define ASSERT(cond) if (!(cond)) ERROR("assertion ["TO_STRING(cond)"] failed \n\tAT "__FILE__":"TO_STRING(__LINE__)":\n");*/
-#define NOT_NULL(v) ASSERT(v)
-#define INFO core_utils_info_implementation
-#define ERROR_ core_utils_error_implementation
-#define WARNING core_utils_warning_implementation
-#define VALIDATE(code) code
+#define OPUS_ASSERT(cond) if (!(cond)) OPUS_ERROR("assertion ["OPUS_TO_STRING_(cond)"] failed \n\tAT "__FILE__":"OPUS_TO_STRING_(__LINE__)":\n");
+#define OPUS_NOT_NULL(v) OPUS_ASSERT(v)
+#define OPUS_INFO opus_info_impl
+#define OPUS_ERROR opus_error_impl
+#define OPUS_WARNING opus_warning_impl
 #endif
 /* clang-format on */
 
 #ifdef __GNUC__
-#define LIKELY(x) __builtin_expect(!!(x), 1)
-#define UNLIKELY(x) __builtin_expect(!!(x), 0)
-#define UNUSED __attribute__((unused))
+#define OPUS_LIKELY(x) __builtin_expect(!!(x), 1)
+#define OPUS_UNLIKELY(x) __builtin_expect(!!(x), 0)
+#define OPUS_UNUSED __attribute__((unused))
 #else
 #define LIKELY(x) x
 #define UNLIKELY(x) x
@@ -78,35 +72,35 @@ extern "C" {
 #pragma warning(disable : 4996) /* For fscanf */
 #endif /*__GNUC__ */
 
-#ifdef UTILS_C99
-#define SELECT_FUNC_ARGS_0_3__(x, A, B, C, FUNC, ...) FUNC
-#define SELECT_FUNC_ARGS_0_3(_0, _1, _2, _3, ...) \
-	SELECT_FUNC_ARGS_0_3__(, ##__VA_ARGS__,       \
+#ifdef OPUS_C99
+#define OPUS_SELECT_FUNC_ARGS_0_3__(x, A, B, C, FUNC, ...) FUNC
+#define OPUS_SELECT_FUNC_ARGS_0_3(_0, _1, _2, _3, ...) \
+	OPUS_SELECT_FUNC_ARGS_0_3__(, ##__VA_ARGS__,       \
 	                       _3(__VA_ARGS__),       \
 	                       _2(__VA_ARGS__),       \
 	                       _1(__VA_ARGS__),       \
 	                       _0(__VA_ARGS__))
 #endif
 
-#ifndef INLINE
+#ifndef OPUS_INLINE
 #if defined(__GNUC__)
 
 #if (__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 1))
-#define INLINE __inline__ __attribute__((always_inline))
+#define OPUS_INLINE __inline__ __attribute__((always_inline))
 #else
-#define INLINE __inline__
+#define OPUS_INLINE __inline__
 #endif /* INLINE */
 
 #elif (defined(_MSC_VER) || defined(__WATCOMC__))
-#define INLINE __inline
+#define OPUS_INLINE __inline
 #else
-#define INLINE
+#define OPUS_INLINE
 #endif
 #endif /* INLINE　*/
 
-void core_utils_info_implementation(char *format, ...);
-void core_utils_error_implementation(char *format, ...);
-void core_utils_warning_implementation(char *format, ...);
+void opus_info_impl(char *format, ...);
+void opus_error_impl(char *format, ...);
+void opus_warning_impl(char *format, ...);
 
 #ifdef __cplusplus
 };

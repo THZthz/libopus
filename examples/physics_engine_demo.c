@@ -1,437 +1,435 @@
-#include <stdio.h>
-#include <string.h>
+#include "vg/vg_color.h"
+#include "vg/vg_engine.h"
+#include "vg/vg_input.h"
+#include "vg/vg_utils.h"
+#include "vg/vg_gl.h"
+#include "vg/pluto/plutovg-private.h"
+#include "vg/pluto/plutovg.h"
+#include "math/polygon/polygon.h"
+#include "physics/matter/algorithm/bvh.h"
+#include "physics/matter/physics.h"
 
-#ifdef __EMSCRIPTEN__
-#include "external/emscripten/emscripten.h"
-#include "external/emscripten/emscripten/html5.h"
-#endif /* __EMSCRIPTEN__ */
+struct param {
+	/********************  VG_ENGINE  **************************/
+	vg_engine_t     *engine;
+	vg_input_t      *input;
+	vg_gl_program_t *program_gl, *program_pl;
+	vg_gl_font_t    *font_gl;
+	plutovg_t       *pl;
 
-#include "data_structure/array.h"
-#include "engine/engine.h"
-#include "math/geometry.h"
-#include "physics/algorithm/bvh.h"
-#include "physics/physics.h"
-#include "render/color.h"
-#include "render/pluto/plutovg-private.h"
-#include "render/pluto/plutovg.h"
-#include "render/render_utils.h"
-#include "utils/utils.h"
-#include "utils/event.h"
+	/******************  PHYSICS_ENGINE  *********************/
+	physics_engine_t *phy_engine;
 
+	int         enable_physics, enable_sleeping;
+	body_t    **stacks, *walls[4], *b1, *b2;
+	opus_bvh   *bvh;
 
-/* render context */
-int                is_running      = 0;
-plutovg_surface_t *vg_surface      = NULL;
-plutovg_t         *vg              = NULL;
-plutovg_font_t    *vg_consola_font = NULL;
-physics_engine_t  *phy_eng         = NULL;
-body_t           **g_stacks        = NULL;
-body_t            *g_walls[4], *b1, *b2;
-bvh_tree_t        *bvh_tree   = NULL;
-char               input[512] = {0};
-int                input_len  = 0;
+	constraint_t *constraint;
 
-void preload(engine_t *eng);
-void update(engine_t *eng, double delta);
-void render(engine_t *eng);
-void cleanup(engine_t *eng);
+	/********************  INTERACTION  *********************/
+	opus_real    translation_delta, scale_delta;
+	opus_vec2 translation;
+	opus_real    scale;
+	body_t *selected_body;
+	int     select_and_click_once;
 
-collision_t *get_c(uint64_t a, uint64_t b)
+} g_param = {0};
+
+void on_pointer_down(vg_input_t *input)
 {
-	uint32_t i;
-	for (i = 0; i < array_len(phy_eng->detector->collisions); i++) {
-		collision_t *c = phy_eng->detector->collisions[i];
-		if (c->body_a->id == a && c->body_b->id == b) return c;
-	}
-	return NULL;
-}
+	body_t **all_bodies = composite_all_bodies(g_param.phy_engine->world);
+	uint64_t i;
+	opus_vec2 p, m = input->pointer;
+	opus_mat2d mat1, mat2, inv;
 
-int on_pointer_down(event_hub_t *hub, event_t *e, void *args)
-{
-	static body_t *selected_body         = NULL;
-	static int     select_and_click_once = 0;
+	/* FIXME */
+	opus_mat2d_scale(mat1, g_param.scale, g_param.scale);
+	opus_mat2d_translate(mat2, g_param.translation.x, g_param.translation.y);
+	opus_mat2d_mul(mat2, mat1);
+	opus_mat2d_inv(inv, mat2);
+	opus_mar2d_pre_mul_xy(&p.x, &p.y, inv, m.x, m.y);
 
-	engine_t *eng        = args;
-	body_t  **all_bodies = composite_all_bodies(phy_eng->world);
-	uint64_t  i;
-	/*for (i = 0; i < array_len(all_bodies); i++) {
-	    body_t *b = all_bodies[i];
-	    if (b->id == 1) {
-	        body_set_position(b, eng->pointer);
-	    }
-	}*/
-	for (i = 0; i < array_len(all_bodies); i++) {
+	opus_set_polygon_offset(0, sizeof(body_vertex_t));
+	for (i = 0; i < opus_arr_len(all_bodies); i++) {
 		body_t *b = all_bodies[i];
-		if (selected_body != NULL && select_and_click_once == 0) {
-			body_set_position(selected_body, eng->pointer);
-			select_and_click_once = 1;
-			selected_body         = NULL;
-			return 0;
-		} else if (vertices_contains(b->vertices, array_len(b->vertices), eng->pointer, sizeof(vertex_t))) {
-			selected_body         = b;
-			select_and_click_once = 0;
-			return 0;
+
+		if (g_param.selected_body != NULL && g_param.select_and_click_once == 0) {
+			body_set_position(g_param.selected_body, p);
+			sleeping_set(g_param.selected_body, 0);
+			g_param.select_and_click_once = 1;
+			g_param.selected_body         = NULL;
+			return;
+		} else if (opus_contains_(b->vertices, opus_arr_len(b->vertices), p)) {
+			g_param.selected_body         = b;
+			g_param.select_and_click_once = 0;
+			return;
 		}
 	}
 
-	selected_body = 0;
-
-	return 0;
+	g_param.selected_body = 0;
 }
 
-static int on_key_down(event_hub_t *hub, event_t *e, void *args)
+void on_pointer_move(vg_input_t *input)
 {
-	engine_t *eng = args;
-	if (eng->keys_state[GLFW_KEY_SPACE]) {
-		is_running = !is_running;
-	} else if (eng->keys_state[GLFW_KEY_BACKSPACE] && input_len > 0) {
-		input[input_len - 1] = 0;
-		input_len--;
-	} else if (eng->keys_state[GLFW_KEY_ENTER]) {
-		int          a, b;
-		collision_t *c;
-		sscanf(input, "%d,%d", &a, &b);
-		a = r_min(a, b);
-		b = r_max(a, b);
-		c = get_c(a, b);
-		if (!c) printf("no collision\n");
-		else
-			printf("supports %d\n", c->n_supports);
-	} else if (eng->keys_state[GLFW_KEY_Q]) {
-		body_set_angle(b1, b1->angle + 0.2);
-	}
-
-	return 0;
+	if (input->is_pointer_down) {}
 }
 
-void character_callback(GLFWwindow *window, unsigned int codepoint)
+void on_key_down(vg_input_t *input)
 {
-	if ((codepoint >= 'A' && codepoint <= 'Z') || (codepoint >= 'a' && codepoint <= 'z') ||
-	    (codepoint >= '0' && codepoint <= '9') || codepoint == ' ' || codepoint == ',') {
-		input[input_len++] = codepoint;
-		input[input_len]   = '\0';
+	if (input->keys_state[GLFW_KEY_Q]) {
+		body_set_angle(g_param.b1, g_param.b1->angle + 0.2);
+		body_set_position(g_param.stacks[0], opus_vec2_(100, 100));
+		body_set_position(g_param.stacks[1], opus_vec2_(100, 100));
+	} else if (input->keys_state[GLFW_KEY_SPACE]) {
+		g_param.enable_physics = !g_param.enable_physics;
 	}
 }
 
-int main()
+void on_scroll(vg_input_t *input)
 {
-	event_cb  l[2];
-	engine_t *engine = NULL;
-	int       width = 800, height = 800;
-
-#ifdef __EMSCRIPTEN__
-	printf("INFO::EMSCRIPTEN SPECIFIED WHEN COMPILING\n");
-#endif
-#ifdef __EMSCRIPTEN_ON_MOBILE__
-	printf("INFO::EMSCRIPTEN_ON_MOBILE SPECIFIED WHEN COMPILING\n");
-#endif
-
-	/*int i = 0;
-	preload(NULL);
-	while (i++ < 100) physics_engine_tick(phy_eng);
-	cleanup(NULL);*/
-
-	engine = engine_create(width, height, "sandbox");
-	engine_set_preload(engine, preload);
-	engine_set_update(engine, update);
-	engine_set_render(engine, render);
-	engine_set_cleanup(engine, cleanup);
-	l[0] = &on_pointer_down;
-	event_hub_on(engine->event_hub, engine_event_on_pointer_down, event_create(l, 1, -1, engine));
-	l[0] = &on_key_down;
-	event_hub_on(engine->event_hub, engine_event_on_key_down, event_create(l, 1, -1, engine));
-	glfwSetCharCallback(engine->window, character_callback);
-	engine_start(engine);
-	engine_destroy(engine);
-
-	return 0;
+	if (input->scroll_y > 0) { g_param.scale *= 1 + g_param.scale_delta; }
+	if (input->scroll_y < 0) { g_param.scale *= 1 - g_param.scale_delta; }
 }
 
-void preload(engine_t *eng)
+void preload(vg_engine_t *engine)
 {
-	if (eng != NULL) {
-		/* load rendering context */
-		eng->data_width                 = eng->width;
-		eng->data_height                = eng->height;
-		eng->draw_data_to_current_frame = 1; /* draw data to screen */
+	plutovg_surface_t *surface = plutovg_surface_create(engine->width, engine->height);
+	g_param.pl                 = plutovg_create(surface);
+	g_param.font_gl            = vg_gl_font_create("../assets/fonts/georgiaz.ttf");
 
-		vg_surface = plutovg_surface_create(eng->width, eng->height);
-		vg         = plutovg_create(vg_surface);
-
-		eng->data = vg_surface->data;
-
-		/* load font */
-		char *consola_font_file_path = "../assets/fonts/consola.ttf";
-#ifdef __EMSCRIPTEN__
-		consola_font_file_path = "consola.ttf";
-#endif
-		vg_consola_font = plutovg_font_load_from_file(consola_font_file_path, 18);
-		plutovg_set_font(vg, vg_consola_font);
-	}
+	plutovg_set_font(g_param.pl, plutovg_font_load_from_file("../assets/fonts/consola.ttf", 18));
 
 	{
-		uint64_t i;
-		int      x, y;
-		real     w = 30, gap = 5;
+		uint64_t i, n = 5;
+		opus_real     x = 100, y = 590;
+		int      ix, iy;
+		opus_real     w = 30, gap = 1;
 		body_t **all_bodies;
 
-		phy_eng = physics_engine_create();
+		g_param.phy_engine = physics_engine_create();
 
-		array_create(g_stacks, sizeof(body_t *));
-		array_resize(g_stacks, 5 * 5);
-		for (y = 0; y < 4; y++) {
-			for (x = 0; x < 4; x++) {
-				body_t *r = common_rectangle(vec2_(x * (w + gap) + 100, y * (w + gap) + 100), w, w);
-				array_push(g_stacks, &r);
-				composite_add_body(phy_eng->world, r);
+		opus_arr_create(g_param.stacks, sizeof(body_t *));
+		for (iy = 0; iy < n; iy++) {
+			for (ix = 0; ix < n; ix++) {
+				body_t *r = common_rectangle(opus_vec2_(ix * (w + gap) + x, iy * (w + gap) + y), w, w);
+				opus_arr_push(g_param.stacks, &r);
+				r->density = 0.09;
+				composite_add_body(g_param.phy_engine->world, r);
 			}
 		}
 
-		b1            = body_create();
-		b2            = body_create();
-		point_t v1[4] = {{439, 109}, {400, 126}, {416, 192}, {501, 116}};
-		point_t v2[5] = {{244, 161}, {327, 164}, {336, 270}, {261, 323}, {138, 245}};
-		body_set_vertices(b1, vertices_create(v1, 4, b1));
-		body_set_position(b1, vec2_(200, 100));
-		body_set_vertices(b2, vertices_create(v2, 5, b2));
-		body_set_position(b2, vec2_(100, 100));
-		composite_add_body(phy_eng->world, b1);
-		composite_add_body(phy_eng->world, b2);
+		g_param.constraint = constraint_create(
+		        constraint_(g_param.stacks[0], g_param.stacks[1], opus_vec2_(0, 0), opus_vec2_(0, 0), 100));
+		/*composite_add_constraint(g_param.phy_engine->world, g_param.constraint);*/
+
+		OPUS_INFO("%d - %d\n", g_param.stacks[0]->id, g_param.stacks[1]->id);
+
+		g_param.b1 = body_create();
+		g_param.b2 = body_create();
+		opus_vec2 v1[4] = {{439, 109}, {400, 126}, {416, 192}, {501, 116}};
+		opus_vec2 v2[5] = {{244, 161}, {327, 164}, {336, 270}, {261, 323}, {138, 245}};
+		body_set_vertices(g_param.b1, vertices_create(v1, 4, g_param.b1));
+		body_set_position(g_param.b1, opus_vec2_(600, 200));
+		body_set_vertices(g_param.b2, vertices_create(v2, 5, g_param.b2));
+		body_set_position(g_param.b2, opus_vec2_(500, 200));
+		composite_add_body(g_param.phy_engine->world, g_param.b1);
+		composite_add_body(g_param.phy_engine->world, g_param.b2);
 
 		/* walls: down up left right */
-		g_walls[0] = common_rectangle(vec2_(400, 780), 780, 20);
-		g_walls[1] = common_rectangle(vec2_(400, 10), 780, 20);
-		g_walls[2] = common_rectangle(vec2_(10, 400), 20, 780);
-		g_walls[3] = common_rectangle(vec2_(780, 400), 20, 780);
-		/*body_rotate(g_walls[0], 0.1, vec2_(0, 0), 0);*/
-		for (y = 0; y < 4; y++) {
-			body_set_static(g_walls[y], 1);
-			composite_add_body(phy_eng->world, g_walls[y]);
+		g_param.walls[0] = common_rectangle(opus_vec2_(400, 780), 780, 20);
+		g_param.walls[1] = common_rectangle(opus_vec2_(400, 10), 780, 20);
+		g_param.walls[2] = common_rectangle(opus_vec2_(10, 400), 20, 780);
+		g_param.walls[3] = common_rectangle(opus_vec2_(780, 400), 20, 780);
+		/*body_rotate(g_param.walls[0], 0.1, vec2_(0, 0), 0);*/
+		for (iy = 0; iy < 4; iy++) {
+			body_set_static(g_param.walls[iy], 1);
+			composite_add_body(g_param.phy_engine->world, g_param.walls[iy]);
 		}
 
-		phy_eng->gravity.y       = 1;
-		phy_eng->gravity_scale   = 0.0001;
-		phy_eng->enable_sleeping = 0;
-		phy_eng->is_fixed        = 1;
+		g_param.phy_engine->gravity.y       = 1;
+		g_param.phy_engine->gravity_scale   = 0.00006;
+		g_param.phy_engine->enable_sleeping = g_param.enable_sleeping;
+		g_param.phy_engine->is_fixed        = 1;
 
-		/*bvh_tree = bvh_tree_create();
-		all_bodies = composite_all_bodies(phy_eng->world);
+		/*g_param.bvh = bvh_tree_create();
+		all_bodies = composite_all_bodies(g_param.phy_engine->world);
 		for (i = 0; i < array_len(all_bodies); i++) {
-		    bvh_tree_insert_leaf(bvh_tree, all_bodies[i], 0);
+		    bvh_tree_insert(g_param.bvh, all_bodies[i], 0);
 		}*/
 	}
 }
 
-void update(engine_t *eng, double delta)
+void update(vg_engine_t *engine, opus_real delta)
 {
-	uint64_t i;
-	body_t **all_bodies;
-	double   s;
+	vg_input_t *input = g_param.input;
+	if (g_param.enable_physics) { physics_engine_update(g_param.phy_engine); }
 
-	if (is_running) {
-		physics_engine_tick(phy_eng);
+	if (g_param.bvh) {
+		size_t   i;
+		opus_real s          = vg_engine_get_time();
+		body_t **all_bodies = composite_all_bodies(g_param.phy_engine->world);
+		opus_bvh_destroy(g_param.bvh);
+		g_param.bvh = opus_bvh_create();
+		for (i = 0; i < opus_arr_len(all_bodies); i++) {
+			bvh_tree_insert(g_param.bvh, all_bodies[i], 0);
+		}
+		OPUS_INFO("%f\n", vg_engine_get_time() - s);
 	}
 
-
-	/*s = engine_get_time();
-	all_bodies= composite_all_bodies(phy_eng->world);
-	bvh_tree_destroy(bvh_tree);
-	bvh_tree = bvh_tree_create();
-	for (i = 0; i < array_len(all_bodies); i++) {
-	    bvh_tree_insert_leaf(bvh_tree, all_bodies[i], 0);
-	}*/
-	/*INFO("%f\n", engine_get_time() - s);*/
+	if (input->keys_state[GLFW_KEY_W])
+		g_param.translation.y += g_param.translation_delta / g_param.scale;
+	if (input->keys_state[GLFW_KEY_A])
+		g_param.translation.x += g_param.translation_delta / g_param.scale;
+	if (input->keys_state[GLFW_KEY_S])
+		g_param.translation.y -= g_param.translation_delta / g_param.scale;
+	if (input->keys_state[GLFW_KEY_D])
+		g_param.translation.x -= g_param.translation_delta / g_param.scale;
 }
 
-static void draw_info(engine_t *eng)
+static void draw_info()
 {
-	vec2 p;
+	opus_vec2 p;
 	char text[1024];
 
-	engine_get_world_coord_from_screen_coord(eng, eng->pointer.x, eng->pointer.y, &p.x, &p.y);
+	opus_vec2_copy(&p, g_param.input->pointer);
 	sprintf(text,
 	        "FPS: %.2lf %.5lf\n"
-	        "World Coordinate: (%.2lf, %.2lf)\n",
-	        eng->fps, eng->elapsed_time, p.x, p.y);
+	        "World Coordinate: (%.2lf, %.2lf)\n"
+	        "translation: (%.3f, %.3f)\n"
+	        "scale: %.3f\n",
+	        g_param.engine->fps * 1000, g_param.engine->elapsed_time, p.x, p.y,
+	        g_param.translation.x, g_param.translation.y, g_param.scale);
 
-	plutovg_set_font_size(vg, 18);
-	painter_text_box(vg, text, -1, 450, 10, -1, -1, 0, 0, 1, 0);
-	plutovg_set_source_rgb(vg, COLOR_BLACK);
-	plutovg_fill(vg);
+	plutovg_set_font_size(g_param.pl, 18);
+	vg_pl_text_box(g_param.pl, text, -1, 400, 10, -1, -1, 0, 0, 1, 0);
+	plutovg_set_source_rgb(g_param.pl, COLOR_BLACK);
+	plutovg_fill(g_param.pl);
 }
 
-static void display_collisions_info(engine_t *eng, collision_t **collisions, real x, real y, real tile_len, real margin)
+static void display_collisions_info(collision_t **collisions, opus_real x, opus_real y,
+                                    opus_real tile_len, opus_real margin)
 {
-	real     ox = x + margin, oy = y + margin, w = tile_len;
+	char text[16];
+
+	opus_real ox = x + margin, oy = y + margin, w = tile_len;
 	uint64_t i, max_id = body_max_id();
 
 	/* background */
-	plutovg_rect(vg, ox - margin, oy - margin, w * (real) max_id + 2 * margin, w * (real) max_id + 2 * margin);
-	plutovg_set_source_rgb(vg, COLOR_BLACK);
-	plutovg_fill(vg);
+	plutovg_rect(g_param.pl, ox - margin, oy - margin, w * (opus_real) max_id + 2 * margin,
+	             w * (opus_real) max_id + 2 * margin);
+	plutovg_set_source_rgb(g_param.pl, COLOR_BLACK);
+	plutovg_fill(g_param.pl);
 
 	/* border */
-	plutovg_rect(vg, ox - margin, oy - margin, w * (real) max_id + 2 * margin, w * (real) max_id + 2 * margin);
-	plutovg_set_source_rgb(vg, COLOR_WHITE);
-	plutovg_stroke(vg);
+	plutovg_rect(g_param.pl, ox - margin, oy - margin, w * (opus_real) max_id + 2 * margin,
+	             w * (opus_real) max_id + 2 * margin);
+	plutovg_set_source_rgb(g_param.pl, COLOR_WHITE);
+	plutovg_stroke(g_param.pl);
 
 	/* gray tile means there exists a collision between respondent bodies */
-	for (i = 0; i < array_len(collisions); i++) {
-		plutovg_rect(vg, (real) collisions[i]->body_a->id * w + ox - w, (real) collisions[i]->body_b->id * w + oy - w, w, w);
+	for (i = 0; i < opus_arr_len(collisions); i++) {
+		plutovg_rect(g_param.pl, (opus_real) collisions[i]->body_a->id * w + ox - w,
+		             (opus_real) collisions[i]->body_b->id * w + oy - w, w, w);
 	}
-	plutovg_set_source_rgb(vg, COLOR_GREEN2);
-	plutovg_fill(vg);
+	plutovg_set_source_rgb(g_param.pl, COLOR_GREEN2);
+	plutovg_fill(g_param.pl);
 
 	/* vertical separation line */
 	for (i = 0; i < max_id; i++) {
 		if (i % 5 == 0) {
-			char text[16];
 			snprintf(text, 16, "%" PRIu64, i + 1);
-			plutovg_text(vg, text, ox + w * (real) i, oy - w);
+			plutovg_text(g_param.pl, text, ox + w * (opus_real) i, oy - w);
 		}
 
-		plutovg_move_to(vg, ox + w * (real) i, oy);
-		plutovg_line_to(vg, ox + w * (real) i, oy + (real) max_id * w);
-		plutovg_set_source_rgba(vg, COLOR_GRAY81, i % 5 ? 0.5 : 1);
-		plutovg_stroke(vg);
+		plutovg_move_to(g_param.pl, ox + w * (opus_real) i, oy);
+		plutovg_line_to(g_param.pl, ox + w * (opus_real) i, oy + (opus_real) max_id * w);
+		plutovg_set_source_rgba(g_param.pl, COLOR_GRAY81, i % 5 ? 0.5 : 1);
+		plutovg_stroke(g_param.pl);
 	}
 
 	/* horizontal separation line */
 	for (i = 0; i < body_max_id(); i++) {
 		if (i % 5 == 0) {
-			char text[16];
 			snprintf(text, 16, "%" PRIu64, i + 1);
-			plutovg_text(vg, text, ox - w, oy + w * (real) i + w);
+			plutovg_text(g_param.pl, text, ox - w, oy + w * (opus_real) i + w);
 		}
 
-		plutovg_move_to(vg, ox, oy + w * (real) i);
-		plutovg_line_to(vg, ox + (real) max_id * w, oy + w * (real) i);
-		plutovg_set_source_rgba(vg, COLOR_GRAY81, i % 5 ? 0.5 : 1);
-		plutovg_stroke(vg);
+		plutovg_move_to(g_param.pl, ox, oy + w * (opus_real) i);
+		plutovg_line_to(g_param.pl, ox + (opus_real) max_id * w, oy + w * (opus_real) i);
+		plutovg_set_source_rgba(g_param.pl, COLOR_GRAY81, i % 5 ? 0.5 : 1);
+		plutovg_stroke(g_param.pl);
 	}
 }
 
-static void draw_body_wireframe(body_t *body)
+static void draw_body(body_t *body)
 {
 	size_t j;
-	plutovg_move_to(vg, body->vertices[0].x, body->vertices[0].y);
-	for (j = 1; j < array_len(body->vertices); j++) {
-		plutovg_line_to(vg, body->vertices[j].x, body->vertices[j].y);
+	char   text[128];
+
+	plutovg_move_to(g_param.pl, body->vertices[0].x, body->vertices[0].y);
+	for (j = 1; j < opus_arr_len(body->vertices); j++) {
+		plutovg_line_to(g_param.pl, body->vertices[j].x, body->vertices[j].y);
 	}
-	plutovg_close_path(vg);
-	plutovg_stroke(vg);
+	plutovg_close_path(g_param.pl);
+	plutovg_set_source_rgba(g_param.pl, COLOR_BLACK, 0.6);
+	plutovg_stroke_preserve(g_param.pl);
+	plutovg_set_source_rgba(g_param.pl, COLOR_GRAY81, 0.6);
+	plutovg_fill(g_param.pl);
+
+	/* draw body's ID */
+	sprintf(text, "%s%" PRIu64 "", body->is_sleeping ? "s" : "", body->id);
+	plutovg_set_font_size(g_param.pl, 10);
+	plutovg_set_source_rgb(g_param.pl, COLOR_BLACK);
+	plutovg_text(g_param.pl, text, body->position.x, body->position.y);
+	plutovg_fill(g_param.pl);
+
+	/*plutovg_circle(g_param.pl, body->position.x, body->position.y, 2);
+	plutovg_fill(g_param.pl);*/
 }
 
-void render(engine_t *eng)
+void render(vg_engine_t *engine)
 {
-	body_t **all_bodies = composite_all_bodies(phy_eng->world);
-	uint64_t i, j;
+	body_t       **all_bodies;
+	constraint_t **all_constraints;
+	uint64_t       i, j;
 
-	memset(eng->data, 255, eng->width * eng->height * 4);
+	int s_width  = g_param.pl->surface->width;
+	int s_height = g_param.pl->surface->height;
 
-	plutovg_set_source_rgb(vg, COLOR_BLACK);
-	for (i = 0; i < array_len(all_bodies); i++) {
-		body_t *b = all_bodies[i];
-		char    text[128];
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-		draw_body_wireframe(b);
+	memset(g_param.pl->surface->data, 255, s_width * s_height * 4);
+	plutovg_set_source_rgba(g_param.pl, COLOR_ANTIQUE_WHITE3, 0.1);
+	plutovg_rect(g_param.pl, 0, 0, s_width, s_height);
+	plutovg_fill(g_param.pl);
 
-		/* draw vertex id */
-		/*plutovg_set_font_size(vg, 13);
-		for (j = 0; j < array_len(b->vertices); j++) {
-		    sprintf(text, "%d", j);
-		    plutovg_text(vg, text, b->vertices[j].x, b->vertices[j].y);
-		}
-		plutovg_fill(vg);*/
+	plutovg_set_line_width(g_param.pl, 1);
 
-		/* draw body's ID */
-		sprintf(text, "%s%" PRIu64 "", b->is_sleeping ? "s" : "", b->id);
-		plutovg_set_font_size(vg, 10);
-		plutovg_text(vg, text, b->position.x, b->position.y);
+	plutovg_save(g_param.pl);
+	plutovg_scale(g_param.pl, g_param.scale, g_param.scale);
+	plutovg_translate(g_param.pl, g_param.translation.x, g_param.translation.y);
+
+	/* draw bodies */
+	all_bodies = composite_all_bodies(g_param.phy_engine->world);
+	for (i = 0; i < opus_arr_len(all_bodies); i++) draw_body(all_bodies[i]);
+
+	/* draw constraints */
+	all_constraints = composite_all_constraints(g_param.phy_engine->world);
+	for (i = 0; i < opus_arr_len(all_constraints); i++) {
+		constraint_t *c = all_constraints[i];
+
+		opus_vec2 pa = c->point_a, pb = c->point_b;
+		if (c->body_a) pa = opus_vec2_add(pa, c->body_a->position);
+		if (c->body_b) pb = opus_vec2_add(pb, c->body_b->position);
+
+		vg_pl_line(g_param.pl, pa.x, pa.y, pb.x, pb.y);
+		plutovg_set_source_rgb(g_param.pl, COLOR_BLACK);
+		plutovg_stroke(g_param.pl);
 	}
 
-	for (i = 0; i < array_len(phy_eng->detector->collisions); i++) {
-		collision_t *c = phy_eng->detector->collisions[i];
-		for (j = 0; j < c->n_supports; j++) {
-			real sx = c->supports[j].x, sy = c->supports[j].y;
-			real nx = c->normal.x, ny = c->normal.y;
-			vec2 v;
-			char t[512];
-			vec2_set(v, nx, ny);
-			vec2_set_length(v, 10);
-			plutovg_circle(vg, sx, sy, 2.3);
-			plutovg_set_source_rgb(vg, COLOR_RED);
-			plutovg_fill(vg);
-			/*plutovg_move_to(vg, sx, sy);
-			plutovg_line_to(vg, sx + v.x, sy + v.y);
-			plutovg_stroke(vg);
+	/* draw collision contact */
+	for (i = 0; i < opus_arr_len(g_param.phy_engine->detector->collisions); i++) {
+		collision_t *col = g_param.phy_engine->detector->collisions[i];
+		for (j = 0; j < col->n_supports; j++) {
+			opus_real sx = col->supports[j].x, sy = col->supports[j].y;
+			opus_real nx = col->normal.x, ny = col->normal.y;
+			opus_vec2 v;
+			opus_vec2_set(&v, nx, ny);
+			opus_vec2_set_length(&v, 8);
+			plutovg_circle(g_param.pl, sx, sy, 2.3);
+			plutovg_set_source_rgb(g_param.pl, COLOR_RED);
+			plutovg_fill(g_param.pl);
 
-			sprintf(t, "id_a:%u", c->body_a->id);
-			plutovg_text(vg, t, sx + 10, sy + 10);
-			plutovg_fill(vg);*/
+			plutovg_move_to(g_param.pl, sx, sy);
+			plutovg_line_to(g_param.pl, sx + v.x, sy + v.y);
+			plutovg_stroke(g_param.pl);
 		}
 	}
 
-	if (!is_running) {
-		extern vertex_t supports[2];
-		collision_t    *c = collision_collides(b1, g_walls[0], NULL);
-		vec2            v = {0};
-		char            text[128];
-		if (c) {
-			vec2_set(v, c->normal.x, c->normal.y);
-			vec2_set_length(v, 10);
-			sprintf(text, "%d", c->body_a->id);
-			plutovg_set_font_size(vg, 13);
-			plutovg_text(vg, text, supports[0].x, supports[0].y);
-			plutovg_set_source_rgb(vg, COLOR_BLACK);
-			plutovg_fill(vg);
-			collision_destroy(c);
-		}
+	/* draw bounding volume hierarchy */
+	if (g_param.bvh) opus_bvh_render(g_param.pl, g_param.bvh);
 
-		plutovg_set_source_rgb(vg, COLOR_GREEN2);
-		draw_body_wireframe(b1);
-		plutovg_set_source_rgb(vg, COLOR_BLACK);
-		draw_body_wireframe(g_walls[0]);
+	plutovg_restore(g_param.pl);
 
-		plutovg_circle(vg, supports[0].x, supports[0].y, 3);
-		//		plutovg_circle(vg, supports[1].x, supports[1].y, 3);
-		plutovg_set_source_rgb(vg, COLOR_BLUE);
-		plutovg_fill(vg);
+	/* draw information */
+	/*display_collisions_info(g_param.phy_engine->detector->collisions, 20, 20, 8, 20);*/
+	draw_info();
 
-		plutovg_move_to(vg, supports[0].x, supports[0].y);
-		plutovg_line_to(vg, supports[0].x + v.x, supports[0].y + v.y);
-		plutovg_stroke(vg);
-	}
-
-	/*bvh_tree_draw(vg, bvh_tree);*/
-
-	/*display_collisions_info(eng, phy_eng->detector->collisions, 20, 20, 8, 20);*/
-
-	draw_info(eng);
-
-	plutovg_font_set_size(vg_consola_font, 25);
-	plutovg_set_source_rgb(vg, COLOR_RED);
-	plutovg_text(vg, input, 50, 50);
-	plutovg_fill(vg);
+	/* render on screen */
+	g_param.program_pl->use(g_param.program_pl, g_param.pl->surface->data, s_width, s_height);
 }
 
-void cleanup(engine_t *eng)
+void cleanup(vg_engine_t *engine)
 {
-	if (eng != NULL) {
-		plutovg_font_destroy(vg_consola_font);
-		plutovg_surface_destroy(vg_surface);
-		plutovg_destroy(vg);
-	}
+	plutovg_destroy(g_param.pl);
+	vg_gl_font_destroy(g_param.font_gl);
 
 	/* release memory related to physics engine */
 	{
 		uint64_t i;
-		body_t **all_bodies = composite_all_bodies(phy_eng->world);
-		INFO("destroy %" PRIu64 " bodies\n", array_len(all_bodies));
-		for (i = 0; i < array_len(all_bodies); i++) body_destroy(all_bodies[i]);
-		array_destroy(g_stacks);
-		physics_engine_destroy(phy_eng);
+		body_t **all_bodies = composite_all_bodies(g_param.phy_engine->world);
+		OPUS_INFO("destroy %" PRIu64 " bodies\n", opus_arr_len(all_bodies));
+		for (i = 0; i < opus_arr_len(all_bodies); i++) body_destroy(all_bodies[i]);
+		opus_arr_destroy(g_param.stacks);
+		physics_engine_destroy(g_param.phy_engine);
 
-		/*bvh_tree_destroy(bvh_tree);*/
+		if (g_param.bvh) opus_bvh_destroy(g_param.bvh);
+
+		constraint_destroy(g_param.constraint);
 	}
+}
+
+void lup(opus_real *mat, uint16_t n, opus_real *LU, uint16_t *P)
+{
+	uint16_t i, j, k;
+
+	for (k = 0; k < n; k++) P[k] = k;
+	memcpy(LU, mat, n * n * sizeof(opus_real));
+
+	for (i = 0; i < n; i++) {}
+}
+
+int main()
+{
+	if (1) {
+		g_param.translation_delta = 10;
+		g_param.scale_delta       = 0.02;
+		g_param.translation       = opus_vec2_(-46, -510);
+		g_param.scale             = 2.972;
+		g_param.enable_physics    = 1;
+		g_param.enable_sleeping   = 0;
+
+		/* engine to create glfw window and a combined "vg_t" instance */
+		g_param.engine = vg_engine_create(800, 800, "vg");
+
+		/* handle glfw window input */
+		g_param.input = vg_input_init(g_param.engine);
+
+		/* specially designed to draw [double, double, ...] like path(tessellate to triangle and
+		 * draw with opengl) */
+		g_param.program_gl = vg_gl_program_preset1();
+
+		/* specially designed to render pluto_vg surface buffer */
+		g_param.program_pl = vg_gl_program_preset2();
+
+		vg_engine_set(g_param.engine, preload, update, render, cleanup);
+		vg_input_on(g_param.input->on_pointer_down, on_pointer_down);
+		vg_input_on(g_param.input->on_key_down, on_key_down);
+		vg_input_on(g_param.input->on_scroll, on_scroll);
+		vg_input_on(g_param.input->on_pointer_move, on_pointer_move /* start engine main loop */);
+		vg_engine_start(g_param.engine);
+
+		/* release resources */
+		vg_gl_program_destroy(g_param.program_gl);
+		vg_gl_program_destroy(g_param.program_pl);
+		vg_engine_destroy(g_param.engine);
+		vg_input_done();
+	} else {
+		int i, j;
+
+		opus_real A[9] = {-5, 3, 4, 10, -8, -9, 15, 1, 2};
+	}
+
+
+	return 0;
 }

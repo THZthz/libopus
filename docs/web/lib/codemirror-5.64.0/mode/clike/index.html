@@ -48,23 +48,23 @@ typedef struct {
 
   int signal_fd;
   int pad;
-  void* context;
+  void* context_;
   sem_t sem;
 } acl_zmq_context;
 
-#define p(X) (context->arg_##X)
+#define p(X) (context_->arg_##X)
 
 void* zmq_thread(void* context_pointer) {
-  acl_zmq_context* context = (acl_zmq_context*)context_pointer;
+  acl_zmq_context* context_ = (acl_zmq_context*)context_pointer;
   char ok = 'K', err = 'X';
   int res;
 
   while (1) {
-    while ((res = sem_wait(&amp;context->sem)) == EINTR);
-    if (res) {write(context->signal_fd, &amp;err, 1); goto cleanup;}
+    while ((res = sem_wait(&amp;context_->sem)) == EINTR);
+    if (res) {write(context_->signal_fd, &amp;err, 1); goto cleanup;}
     switch(p(command)) {
     case 0: goto cleanup;
-    case 1: p(socket) = zmq_socket(context->context, p(int)); break;
+    case 1: p(socket) = zmq_socket(context_->context_, p(int)); break;
     case 2: p(int) = zmq_close(p(socket)); break;
     case 3: p(int) = zmq_bind(p(socket), p(string)); break;
     case 4: p(int) = zmq_connect(p(socket), p(string)); break;
@@ -75,24 +75,24 @@ void* zmq_thread(void* context_pointer) {
     case 9: p(int) = zmq_poll(p(socket), p(int), p(len)); break;
     }
     p(command) = errno;
-    write(context->signal_fd, &amp;ok, 1);
+    write(context_->signal_fd, &amp;ok, 1);
   }
  cleanup:
-  close(context->signal_fd);
+  close(context_->signal_fd);
   free(context_pointer);
   return 0;
 }
 
 void* zmq_thread_init(void* zmq_context, int signal_fd) {
-  acl_zmq_context* context = malloc(sizeof(acl_zmq_context));
+  acl_zmq_context* context_ = malloc(sizeof(acl_zmq_context));
   pthread_t thread;
 
-  context->context = zmq_context;
-  context->signal_fd = signal_fd;
-  sem_init(&amp;context->sem, 1, 0);
-  pthread_create(&amp;thread, 0, &amp;zmq_thread, context);
+  context_->context_ = zmq_context;
+  context_->signal_fd = signal_fd;
+  sem_init(&amp;context_->sem, 1, 0);
+  pthread_create(&amp;thread, 0, &amp;zmq_thread, context_);
   pthread_detach(thread);
-  return context;
+  return context_;
 }
 </textarea></div>
 

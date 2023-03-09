@@ -28,7 +28,7 @@
 <article>
 <h2>Autocomplete Demo</h2>
 <form><textarea id="code" name="code">
-function getCompletions(token, context) {
+function getCompletions(token, context_) {
   var found = [], start = token.string;
   function maybeAdd(str) {
     if (str.indexOf(start) == 0) found.push(str);
@@ -40,18 +40,18 @@ function getCompletions(token, context) {
     for (var name in obj) maybeAdd(name);
   }
 
-  if (context) {
+  if (context_) {
     // If this is a property, see if it belongs to some object we can
     // find in the current environment.
-    var obj = context.pop(), base;
+    var obj = context_.pop(), base;
     if (obj.className == "js-variable")
       base = window[obj.string];
     else if (obj.className == "js-string")
       base = "";
     else if (obj.className == "js-atom")
       base = 1;
-    while (base != null && context.length)
-      base = base[context.pop().string];
+    while (base != null && context_.length)
+      base = base[context_.pop().string];
     if (base != null) gatherCompletions(base);
   }
   else {

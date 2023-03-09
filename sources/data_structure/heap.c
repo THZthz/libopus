@@ -163,7 +163,7 @@ void *heap_remove(heap_t *heap, size_t idx)
 	}
 
 	temp = malloc(heap->ele_size);
-	if (UNLIKELY(!temp)) return NULL; /* unlikely */
+	if (OPUS_UNLIKELY(!temp)) return NULL; /* unlikely */
 
 	/* exchange current element and the last element */
 	ret = ELE_AT(heap, heap->n_used - 1);

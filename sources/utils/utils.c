@@ -15,9 +15,11 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+#define SOKOL_TIME_IMPL
 #include "utils/utils.h"
+#include "external/sokol_time.h"
 
-void core_utils_info_implementation(char *format, ...)
+void opus_info_impl(char *format, ...)
 {
 	va_list args;
 	va_start(args, format);
@@ -25,7 +27,7 @@ void core_utils_info_implementation(char *format, ...)
 	vfprintf(stdout, format, args);
 }
 
-void core_utils_error_implementation(char *format, ...)
+void opus_error_impl(char *format, ...)
 {
 	va_list args;
 	va_start(args, format);
@@ -33,7 +35,7 @@ void core_utils_error_implementation(char *format, ...)
 	vfprintf(stderr, format, args);
 }
 
-void core_utils_warning_implementation(char *format, ...)
+void opus_warning_impl(char *format, ...)
 {
 	va_list args;
 	va_start(args, format);

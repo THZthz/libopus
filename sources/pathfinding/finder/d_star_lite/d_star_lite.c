@@ -414,12 +414,12 @@ static int re_plan_(context_t *context)
 	cell_t *cur;
 	int     res;
 
-	array_clear(context->path);
+	opus_arr_clear(context->path);
 
 	if (!(res = compute_(context))) return 0;
 
 	cur = context->start;
-	array_push(context->path, &cur);
+	opus_arr_push(context->path, &cur);
 
 	while (cur != context->goal) {
 		cell_t *s;
@@ -429,7 +429,7 @@ static int re_plan_(context_t *context)
 		min_successor_(context, cur, &s, &r);
 		cur = s;
 
-		array_push(context->path, &cur);
+		opus_arr_push(context->path, &cur);
 	}
 
 	return res;
@@ -456,8 +456,8 @@ static graph_status_t create_context(pathfinder_t *finder, void **args)
 			return GRAPH_NO_MEM;
 		}
 
-		array_create(context->path, sizeof(cell_t *));
-		array_create(context->open_heap_data_, sizeof(unsigned));
+		opus_arr_create(context->path, sizeof(cell_t *));
+		opus_arr_create(context->open_heap_data_, sizeof(unsigned));
 		context->open_heap.data_    = context->open_heap_data_;
 		context->open_heap.ele_size = sizeof(unsigned);
 		context->open_heap.capacity = rows * cols;
@@ -481,8 +481,8 @@ static graph_status_t destroy_context(pathfinder_t *finder)
 	if (finder && finder->context_) {
 		context_t *context = finder->context_;
 
-		array_destroy(context->path);
-		array_destroy(context->open_heap_data_);
+		opus_arr_destroy(context->path);
+		opus_arr_destroy(context->open_heap_data_);
 
 		map_done(&context->map);
 
@@ -495,7 +495,7 @@ static graph_status_t destroy_context(pathfinder_t *finder)
 static void init_(context_t *context, unsigned from, unsigned to)
 {
 	context->open_heap.n_used = 0;
-	array_clear(context->path);
+	opus_arr_clear(context->path);
 
 	context->k_m   = 0;
 	context->start = get_cell_by_id(context, from);
@@ -533,10 +533,10 @@ static graph_status_t get_path(pathfinder_t *finder, graph_id_t **res_path, grap
 	unsigned i;
 	context    = finder->context_;
 	*res_count = 0;
-	*res_path  = (graph_id_t *) malloc(sizeof(graph_id_t) * array_len(context->path));
+	*res_path  = (graph_id_t *) malloc(sizeof(graph_id_t) * opus_arr_len(context->path));
 	if (!(*res_path)) return GRAPH_NO_MEM;
-	*res_count = array_len(context->path);
-	for (i = 0; i < array_len(context->path); i++) (*res_path)[i] = get_cell_id(context, context->path[i]);
+	*res_count = opus_arr_len(context->path);
+	for (i = 0; i < opus_arr_len(context->path); i++) (*res_path)[i] = get_cell_id(context, context->path[i]);
 	return GRAPH_OK;
 }
 

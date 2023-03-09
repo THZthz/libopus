@@ -3,21 +3,21 @@
 #include <string.h>
 
 #ifdef __EMSCRIPTEN__
-#include "core/external/emscripten/emscripten.h"
-#include "core/external/emscripten/emscripten/html5.h"
+#include "external/emscripten/emscripten.h"
+#include "external/emscripten/emscripten/html5.h"
 #endif /* __EMSCRIPTEN__ */
 
-#include "core/data_structure/array.h"
-#include "core/data_structure/heap.h"
-#include "core/engine/engine.h"
-#include "core/math/geometry.h"
-#include "core/pathfinding/graph.h"
-#include "core/pathfinding/pathfinder.h"
-#include "core/render/color.h"
-#include "core/render/pluto/plutovg-private.h"
-#include "core/render/pluto/plutovg.h"
-#include "core/render/render_utils.h"
-#include "core/utils/event.h"
+#include "data_structure/array.h"
+#include "data_structure/heap.h"
+#include "engine/engine.h"
+#include "math/geometry.h"
+#include "pathfinding/graph.h"
+#include "pathfinding/pathfinder.h"
+#include "vg/vg_color.h"
+#include "render/pluto/plutovg-private.h"
+#include "render/pluto/plutovg.h"
+#include "render/render_utils.h"
+#include "utils/event.h"
 
 struct parameters {
 	engine_t *engine;
@@ -160,7 +160,7 @@ void preload(engine_t *eng)
 	/* load rendering context */
 	eng->data_width                 = eng->width;
 	eng->data_height                = eng->height;
-	eng->draw_data_to_current_frame = core_true; /* draw data to screen */
+	eng->draw_data_to_current_frame = 1; /* draw data to screen */
 
 	paras.surface = plutovg_surface_create(eng->width, eng->height);
 	paras.vg      = plutovg_create(paras.surface);
@@ -192,7 +192,7 @@ void preload(engine_t *eng)
 		        {0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 		};
 		paras.graph  = graph_grid_create(1, 0, 100, 100, 18, 18, 10, 10);
-		paras.finder = pathfinder_d_star_lite_create(paras.graph, 10, 10);
+		paras.finder = pathfinder_a_star_create(paras.graph);
 
 		graph_grid_map(paras.graph, (char **) map);
 		graph_grid_print_map01(paras.graph);

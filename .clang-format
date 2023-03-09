@@ -4,6 +4,8 @@ AccessModifierOffset: -4
 AlignAfterOpenBracket: Align
 AlignOperands: Align
 
+SortIncludes: false # prohibits sorting includes
+
 # user defined code style
 AlignTrailingComments: true
 AlignConsecutiveAssignments: true # some problems about this

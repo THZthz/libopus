@@ -1,97 +1,80 @@
+#include "vg/vg_color.h"
+#include "vg/vg_engine.h"
+#include "vg/vg_input.h"
+#include "vg/vg_utils.h"
+#include "vg/vg_gl.h"
+#include "vg/pluto/plutovg-private.h"
+#include "vg/pluto/plutovg.h"
 
-#include <stdio.h>
-#include <string.h>
+vg_engine_t     *g_engine  = NULL;
+vg_input_t      *g_input   = NULL;
+vg_gl_program_t *g_program = NULL;
+vg_gl_font_t    *g_font    = NULL;
+vg_gl_program_t *g_pl_r    = NULL;
 
-#ifdef __EMSCRIPTEN__
-#include "core/external/emscripten/emscripten.h"
-#include "core/external/emscripten/emscripten/html5.h"
-#endif /* __EMSCRIPTEN__ */
+plutovg_surface_t *g_pl_s = NULL;
+plutovg_t         *g_pl   = NULL;
 
-#include "core/data_structure/array.h"
-#include "core/engine/engine.h"
-#include "core/math/geometry.h"
-#include "core/render/color.h"
-#include "core/render/pluto/plutovg-private.h"
-#include "core/render/pluto/plutovg.h"
-#include "core/render/render_utils.h"
-#include "core/utils/event.h"
-
-struct parameters {
-	plutovg_surface_t *surface;
-	plutovg_t         *vg;
-	plutovg_font_t    *font;
-} paras = {NULL, NULL, NULL};
-
-int on_pointer_down(event_hub_t *hub, event_t *e, void *args)
+void on_pointer_down(vg_input_t *input)
 {
-	return 0;
+}
+
+void on_key_down(vg_input_t *input)
+{
+}
+
+void preload(vg_engine_t *engine)
+{
+	g_pl_s = plutovg_surface_create(engine->width, engine->height);
+	g_pl   = plutovg_create(g_pl_s);
+	g_font = vg_gl_font_create("../assets/fonts/georgiaz.ttf");
+}
+
+void update(vg_engine_t *engine, real delta)
+{
+
+}
+
+void render(vg_engine_t *engine)
+{
+	vg_t *vg = engine->vg;
+
+	glClearColor(COLOR_WHITE, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+}
+
+void cleanup(vg_engine_t *engine)
+{
+	plutovg_surface_destroy(g_pl_s);
+	plutovg_destroy(g_pl);
+	vg_gl_font_destroy(g_font);
 }
 
 int main()
 {
-	void preload(engine_t * eng);
-	void update(engine_t * eng, double delta);
-	void render(engine_t * eng);
-	void cleanup(engine_t * eng);
+	/* engine to create glfw window and a combined "vg_t" instance */
+	g_engine = vg_engine_create(800, 800, "vg");
 
-	event_cb  l[2];
-	engine_t *engine = NULL;
-	int       width = 800, height = 800;
+	/* handle glfw window input */
+	g_input = vg_input_init(g_engine);
 
-#ifdef __EMSCRIPTEN__
-	printf("EMSCRIPTEN SPECIFIED WHEN COMPILING\n");
-#endif
-#ifdef __EMSCRIPTEN_ON_MOBILE__
-	printf("EMSCRIPTENON_MOBILE SPECIFIED WHEN COMPILING\n");
-#endif
+	/* specially designed to draw [double, double, ...] like path(tessellate to triangle and draw with opengl) */
+	g_program = vg_gl_program_preset1();
 
-	engine = engine_create(width, height, "sandbox");
-	engine_set_preload(engine, preload);
-	engine_set_update(engine, update);
-	engine_set_render(engine, render);
-	engine_set_cleanup(engine, cleanup);
-	l[0] = &on_pointer_down;
-	event_hub_on(engine->event_hub, engine_event_on_pointer_down, event_create(l, 1, -1, engine));
-	engine_start(engine);
-	engine_destroy(engine);
+	/* specially designed to render pluto_vg surface buffer */
+	g_pl_r = vg_gl_program_preset2();
+
+	vg_engine_set(g_engine, preload, update, render, cleanup);
+	vg_input_on(g_input->on_pointer_down, on_pointer_down);
+	vg_input_on(g_input->on_key_down, on_key_down);
+	vg_engine_start(g_engine); /* start engine main loop */
+
+	/* release resources */
+	vg_gl_program_destroy(g_program);
+	vg_gl_program_destroy(g_pl_r);
+	vg_engine_destroy(g_engine);
+	vg_input_done();
+
 
 	return 0;
-}
-
-void preload(engine_t *eng)
-{
-	/* load rendering context */
-	eng->data_width                 = eng->width;
-	eng->data_height                = eng->height;
-	eng->draw_data_to_current_frame = core_true; /* draw data to screen */
-
-	paras.surface = plutovg_surface_create(eng->width, eng->height);
-	paras.vg      = plutovg_create(paras.surface);
-
-	eng->data = paras.surface->data;
-
-	{ /* load font */
-		char *consola_font_file_path = "../assets/fonts/consola.ttf";
-#ifdef __EMSCRIPTEN__
-		consola_font_file_path = "consola.ttf";
-#endif
-		paras.font = plutovg_font_load_from_file(consola_font_file_path, 18);
-		plutovg_set_font(paras.vg, paras.font);
-	}
-}
-
-void update(engine_t *eng, double delta)
-{
-}
-
-void render(engine_t *eng)
-{
-	memset(eng->data, 255, eng->width * eng->height * 4);
-}
-
-void cleanup(engine_t *eng)
-{
-	plutovg_font_destroy(paras.font);
-	plutovg_surface_destroy(paras.surface);
-	plutovg_destroy(paras.vg);
 }

@@ -128,23 +128,23 @@
         }
 
         function pushContext(state__, stream, type, indent) {
-            state__.context = new Context(type, stream.indentation() + (indent === false ? 0 : indentUnit), state__.context);
+            state__.context_ = new Context(type, stream.indentation() + (indent === false ? 0 : indentUnit), state__.context_);
             return type;
         }
 
         function popContext(state__) {
-            if (state__.context.prev)
-                state__.context = state__.context.prev;
-            return state__.context.type;
+            if (state__.context_.prev)
+                state__.context_ = state__.context_.prev;
+            return state__.context_.type;
         }
 
         function pass(type, stream, state__) {
-            return states[state__.context.type](type, stream, state__);
+            return states[state__.context_.type](type, stream, state__);
         }
 
         function popAndPass(type, stream, state__, n) {
             for (var i = n || 1; i > 0; i--)
-                state__.context = state__.context.prev;
+                state__.context_ = state__.context_.prev;
             return pass(type, stream, state__);
         }
 
@@ -165,13 +165,13 @@
         states.top = function (type, stream, state__) {
             if (type == "{") {
                 return pushContext(state__, stream, "block");
-            } else if (type == "}" && state__.context.prev) {
+            } else if (type == "}" && state__.context_.prev) {
                 return popContext(state__);
             } else if (supportsAtComponent && /@component/i.test(type)) {
                 return pushContext(state__, stream, "atComponentBlock");
             } else if (/^@(-moz-)?document$/i.test(type)) {
                 return pushContext(state__, stream, "documentTypes");
-            } else if (/^@(media|supports|(-moz-)?document|import)$/i.test(type)) {
+            } else if (/^@(media|g_supports|(-moz-)?document|import)$/i.test(type)) {
                 return pushContext(state__, stream, "atBlock");
             } else if (/^@(font-face|counter-style)/i.test(type)) {
                 state__.stateArg = type;
@@ -193,7 +193,7 @@
             } else if (allowNested && type == "(") {
                 return pushContext(state__, stream, "parens");
             }
-            return state__.context.type;
+            return state__.context_.type;
         };
 
         states.block = function (type, stream, state__) {
@@ -249,7 +249,7 @@
                 override = "property";
                 return "maybeprop";
             }
-            return state__.context.type;
+            return state__.context_.type;
         };
 
         states.parens = function (type, stream, state__) {
@@ -266,7 +266,7 @@
 
             if (type == "word") {
                 override = "variable-3";
-                return state__.context.type;
+                return state__.context_.type;
             }
             return pass(type, stream, state__);
         };
@@ -274,7 +274,7 @@
         states.documentTypes = function (type, stream, state__) {
             if (type == "word" && documentTypes.hasOwnProperty(stream.current())) {
                 override = "tag";
-                return state__.context.type;
+                return state__.context_.type;
             } else {
                 return states.atBlock(type, stream, state__);
             }
@@ -308,7 +308,7 @@
                 else
                     override = "error";
             }
-            return state__.context.type;
+            return state__.context_.type;
         };
 
         states.atComponentBlock = function (type, stream, state__) {
@@ -318,7 +318,7 @@
                 return popContext(state__) && pushContext(state__, stream, allowNested ? "block" : "top", false);
             if (type == "word")
                 override = "error";
-            return state__.context.type;
+            return state__.context_.type;
         };
 
         states.atBlock_parens = function (type, stream, state__) {
@@ -384,7 +384,7 @@
                     tokenize: null,
                     state__: inline ? "block" : "top",
                     stateArg: null,
-                    context: new Context(inline ? "block" : "top", base || 0, null)
+                    context_: new Context(inline ? "block" : "top", base || 0, null)
                 };
             },
 
@@ -402,7 +402,7 @@
             },
 
             indent: function (state__, textAfter) {
-                var cx = state__.context, ch = textAfter && textAfter.charAt(0);
+                var cx = state__.context_, ch = textAfter && textAfter.charAt(0);
                 var indent = cx.indent;
                 if (cx.type == "prop" && (ch == "}" || ch == ")")) cx = cx.prev;
                 if (cx.prev) {
@@ -651,7 +651,7 @@
         "cjk-heavenly-stem", "cjk-ideographic", "clear", "clip", "close-quote",
         "col-resize", "collapse", "color", "color-burn", "color-dodge", "column", "column-reverse",
         "compact", "condensed", "contain", "tag_list", "contents",
-        "tag_list-box", "context-menu", "continuous", "contrast", "copy", "counter", "counters", "cover", "crop",
+        "tag_list-box", "context_-menu", "continuous", "contrast", "copy", "counter", "counters", "cover", "crop",
         "cross", "crosshair", "cubic-bezier", "currentcolor", "cursive", "cyclic", "darken", "dashed", "decimal",
         "decimal-leading-zero", "default", "default-button", "dense", "destination-atop",
         "destination-in", "destination-out", "destination-over", "devanagari", "difference",
@@ -840,7 +840,7 @@
             },
             "@": function (stream) {
                 if (stream.eat("{")) return [null, "interpolation"];
-                if (stream.match(/^(charset|document|font-face|import|(-(moz|ms|o|webkit)-)?keyframes|media|namespace|page|supports)\b/i, false)) return false;
+                if (stream.match(/^(charset|document|font-face|import|(-(moz|ms|o|webkit)-)?keyframes|media|namespace|page|g_supports)\b/i, false)) return false;
                 stream.eatWhile(/[\w\\\-]/);
                 if (stream.match(/^\s*:/, false))
                     return ["variable-2", "variable-definition"];

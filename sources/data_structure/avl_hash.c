@@ -1,8 +1,9 @@
-#include "data_structure/avl_hash.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "data_structure/avl_hash.h"
 
 void avl_hash_init(avl_hash_table_t *ht,
                    size_t (*hash)(const void *key),
@@ -431,7 +432,7 @@ void *avl_map_lookup(avl_hash_map_t *hm, const void *key, void *defval)
 	return avl_hash_value(entry);
 }
 
-static INLINE avl_hash_entry_t *avl_hash_entry_allocate(avl_hash_map_t *hm, void *key, void *value)
+static OPUS_INLINE avl_hash_entry_t *avl_hash_entry_allocate(avl_hash_map_t *hm, void *key, void *value)
 {
 	avl_hash_entry_t *entry;
 	entry = (avl_hash_entry_t *) avl_fastbin_new(&hm->fb);
@@ -445,7 +446,7 @@ static INLINE avl_hash_entry_t *avl_hash_entry_allocate(avl_hash_map_t *hm, void
 	return entry;
 }
 
-static INLINE avl_hash_entry_t *avl_hash_update(avl_hash_map_t *hm, void *key, void *value, int update)
+static OPUS_INLINE avl_hash_entry_t *avl_hash_update(avl_hash_map_t *hm, void *key, void *value, int update)
 {
 	size_t                 hash   = hm->ht.hash(key);
 	struct avl_hash_index *index  = &(hm->ht.index[hash & hm->ht.index_mask]);
@@ -504,7 +505,7 @@ static INLINE avl_hash_entry_t *avl_hash_update(avl_hash_map_t *hm, void *key, v
 	return entry;
 }
 
-static INLINE void avl_map_rehash(avl_hash_map_t *hm, size_t capacity)
+static OPUS_INLINE void avl_map_rehash(avl_hash_map_t *hm, size_t capacity)
 {
 	size_t isize = hm->ht.index_size;
 	size_t limit = (capacity * 6) >> 2; /* capacity * 6 / 4 */

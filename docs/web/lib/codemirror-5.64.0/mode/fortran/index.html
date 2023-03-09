@@ -36,9 +36,9 @@
 
   implicit none
 
-  real, dimension(:), allocatable :: points
+  opus_real, dimension(:), allocatable :: points
   integer                         :: number_of_points
-  real                            :: average_points=0., positive_average=0., negative_average=0.
+  opus_real                            :: average_points=0., positive_average=0., negative_average=0.
 
   write (*,*) "Input number of points to average:"
   read  (*,*) number_of_points

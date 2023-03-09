@@ -20,7 +20,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "core/utils/core_utils.h"
+#include "utils/utils.h"
 
 #define MAX_PATTERN_SIZE (512)
 #define MAX_SUB_MATCHES_SIZE (50)
@@ -233,7 +233,7 @@ int regexp_match(regexp_t *regexp, const char *string)
 		threads[threads_len].sp = (_sp); \
 		threads_len++;                   \
 	} while (0)
-#define pop_thread() ({ threads_len--; })
+#define pop_thread() { threads_len--; }
 
 	/* personally I think Thompson's VM is basically no difference in efficiency compared to this */
 	struct search_thread {
@@ -287,7 +287,7 @@ int regexp_match(regexp_t *regexp, const char *string)
 					cur.pc += 2;
 					break;
 				default:
-					ERROR("REGEXP::match::Unknown command in commands list(pc: %d)\n");
+					OPUS_ERROR("REGEXP::match::Unknown command in commands list(pc: %d)\n");
 					return 0; /* no match */
 			}
 		}
@@ -303,7 +303,7 @@ int regexp_match(regexp_t *regexp, const char *string)
 
 int main()
 {
-#define ERR_RETURN(msg) ({printf("%s\n", (msg)); return 1; })
+#define ERR_RETURN(msg) {printf("%s\n", (msg)); return 1; }
 
 	regexp_t regexp;
 
@@ -332,3 +332,4 @@ int main()
 
 	return 0;
 }
+

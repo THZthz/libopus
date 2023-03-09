@@ -48,14 +48,14 @@
         var pending;
         editor.on("change", function () {
             clearTimeout(pending);
-            pending = setTimeout(update, 400);
+            pending = setTimeout(update_, 400);
         });
 
         function looksLikeScheme(code) {
             return !/^\s*\(\s*function\b/.test(code) && /^\s*[;\(]/.test(code);
         }
 
-        function update() {
+        function update_() {
             editor.setOption("mode", looksLikeScheme(editor.getValue()) ? "scheme" : "javascript");
         }
     </script>

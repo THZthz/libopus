@@ -51,10 +51,10 @@
       tprop = getToken(editor, Pos(cur.line, tprop.start));
       if (tprop.string != ".") return;
       tprop = getToken(editor, Pos(cur.line, tprop.start));
-      if (!context) var context = [];
-      context.push(tprop);
+      if (!context_) var context_ = [];
+      context_.push(tprop);
     }
-    return {list: getCompletions(token, context, keywords, options),
+    return {list: getCompletions(token, context_, keywords, options),
             from: Pos(cur.line, token.start),
             to: Pos(cur.line, token.end)};
   }
@@ -108,7 +108,7 @@
     }
   }
 
-  function getCompletions(token, context, keywords, options) {
+  function getCompletions(token, context_, keywords, options) {
     var found = [], start = token.string, global = options && options.globalScope || window;
     function maybeAdd(str) {
       if (str.lastIndexOf(start, 0) == 0 && !arrayContains(found, str)) found.push(str);
@@ -120,10 +120,10 @@
       forAllProps(obj, maybeAdd)
     }
 
-    if (context && context.length) {
+    if (context_ && context_.length) {
       // If this is a property, see if it belongs to some object we can
       // find in the current environment.
-      var obj = context.pop(), base;
+      var obj = context_.pop(), base;
       if (obj.type && obj.type.indexOf("variable") === 0) {
         if (options && options.additionalContext)
           base = options.additionalContext[obj.string];
@@ -140,14 +140,14 @@
         else if (global._ != null && (obj.string == '_') && (typeof global._ == 'function'))
           base = global._();
       }
-      while (base != null && context.length)
-        base = base[context.pop().string];
+      while (base != null && context_.length)
+        base = base[context_.pop().string];
       if (base != null) gatherCompletions(base);
     } else {
       // If not, just look in the global object, any local scope, and optional additional-context
       // (reading into JS mode internals to get at the local and global variables)
       for (var v = token.state.localVars; v; v = v.next) maybeAdd(v.name);
-      for (var c = token.state.context; c; c = c.prev)
+      for (var c = token.state.context_; c; c = c.prev)
         for (var v = c.vars; v; v = v.next) maybeAdd(v.name)
       for (var v = token.state.globalVars; v; v = v.next) maybeAdd(v.name);
       if (options && options.additionalContext != null)

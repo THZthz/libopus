@@ -110,6 +110,11 @@ typedef struct ILISTHEAD ilist_head;
 extern "C" {
 #endif
 
+typedef struct avl_hash_node  avl_hash_node_t;
+typedef struct avl_hash_table avl_hash_table_t;
+typedef struct avl_hash_entry avl_hash_entry_t;
+typedef struct avl_hash_map   avl_hash_map_t;
+
 
 /**
  * avl_hash_node_t: embedded in your structure
@@ -120,7 +125,6 @@ struct avl_hash_node {
 	void  *key; /*  generic type pointer */
 	size_t hash;
 };
-typedef struct avl_hash_node avl_hash_node_t;
 
 /**
  * hash index (or slot/bucket)
@@ -146,7 +150,6 @@ struct avl_hash_table {
 	struct avl_hash_index *index;
 	struct avl_hash_index  init[avl_hash_INIT_SIZE];
 };
-typedef struct avl_hash_table avl_hash_table_t;
 
 void avl_hash_init(avl_hash_table_t *ht,
                    size_t (*hash)(const void *key),
@@ -168,7 +171,7 @@ avl_hash_node_t *avl_hash_node_prev(avl_hash_table_t *ht, avl_hash_node_t *node)
  * @param node
  * @param key
  */
-static INLINE void avl_hash_node_key(avl_hash_table_t *ht, avl_hash_node_t *node, void *key)
+static OPUS_INLINE void avl_hash_node_key(avl_hash_table_t *ht, avl_hash_node_t *node, void *key)
 {
 	node->key  = key;
 	node->hash = ht->hash(key);
@@ -176,16 +179,11 @@ static INLINE void avl_hash_node_key(avl_hash_table_t *ht, avl_hash_node_t *node
 
 
 avl_hash_node_t *avl_hash_find(avl_hash_table_t *ht, const avl_hash_node_t *node);
-
 avltree_node_t **avl_hash_track(avl_hash_table_t *ht, const avl_hash_node_t *node, avltree_node_t **parent);
-
 avl_hash_node_t *avl_hash_add(avl_hash_table_t *ht, avl_hash_node_t *node);
-
-void avl_hash_erase(avl_hash_table_t *ht, avl_hash_node_t *node);
-
-void avl_hash_replace(avl_hash_table_t *ht, avl_hash_node_t *victim, avl_hash_node_t *newnode);
-
-void avl_hash_clear(avl_hash_table_t *ht, void (*destroy)(avl_hash_node_t *node));
+void             avl_hash_erase(avl_hash_table_t *ht, avl_hash_node_t *node);
+void             avl_hash_replace(avl_hash_table_t *ht, avl_hash_node_t *victim, avl_hash_node_t *newnode);
+void             avl_hash_clear(avl_hash_table_t *ht, void (*destroy)(avl_hash_node_t *node));
 
 
 /**
@@ -228,7 +226,6 @@ struct avl_hash_entry {
 	avl_hash_node_t node;
 	void           *value;
 };
-typedef struct avl_hash_entry avl_hash_entry_t;
 
 struct avl_hash_map {
 	size_t count;
@@ -242,7 +239,6 @@ struct avl_hash_map {
 	struct avl_fastbin fb;
 	avl_hash_table_t   ht;
 };
-typedef struct avl_hash_map avl_hash_map_t;
 
 
 #define avl_hash_key(entry) ((entry)->node.key)

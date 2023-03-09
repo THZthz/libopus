@@ -1,3 +1,0 @@
-"C:\Environment\JetBrains\CLion 2021.2.2\bin\cmake\win\bin\cmake.exe" -E rm -f CMakeFiles\smiley.dir/objects.a
-C:\Environment\msys64\mingw64\bin\ar.exe cr CMakeFiles\smiley.dir/objects.a @CMakeFiles\smiley.dir\objects1.rsp
-C:\Environment\msys64\mingw64\bin\gcc.exe  -std=c90 -pedantic -g -Wl,--whole-archive CMakeFiles\smiley.dir/objects.a -Wl,--no-whole-archive -o smiley.exe -Wl,--out-implib,libsmiley.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles\smiley.dir\linklibs.rsp

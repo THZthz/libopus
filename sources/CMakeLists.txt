@@ -4,7 +4,7 @@ project(opus)
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c90 -pedantic")
 add_library(opus
         # DATA
-        data_structure/array.h
+        data_structure/array.h data_structure/array.c
         data_structure/avl.h data_structure/avl.c
         data_structure/avl_hash.h data_structure/avl_hash.c
         data_structure/hashmap.h data_structure/hashmap.c
@@ -14,21 +14,36 @@ add_library(opus
         data_structure/trie.h data_structure/trie.c
 
         # PHYSICS
-        physics/physics.h
-        physics/axes.c
-        physics/body.c
-        physics/algorithm/bvh.h physics/algorithm/bvh.c
-        physics/algorithm/sat.c
-        physics/algorithm/resolve.c
-        physics/collision.c
-        physics/common.c
-        physics/composite.c
-        physics/constraint.c
-        physics/detector.c
-        physics/engine.c
-        physics/pair.c
-        physics/sleeping.c
-        physics/vertices.c
+        #        physics/matter/physics.h
+        #        physics/matter/axes.c
+        #        physics/matter/body.c
+        #        physics/matter/algorithm/bvh.h physics/matter/algorithm/bvh.c
+        #        physics/matter/algorithm/sat.c
+        #        physics/matter/algorithm/resolver.c
+        #        physics/matter/collision.c
+        #        physics/matter/common.c
+        #        physics/matter/composite.c
+        #        physics/matter/constraint.c
+        #        physics/matter/detector.c
+        #        physics/matter/engine.c
+        #        physics/matter/pair.c
+        #        physics/matter/sleeping.c
+        #        physics/matter/vertices.c
+
+        physics/opus/physics.h physics/opus/physics_private.h
+        physics/opus/collision/narrow_phase/SAT.c
+        physics/opus/collision/narrow_phase/GJK.c
+        physics/opus/collision/broad_phase/BVH.c
+        physics/opus/collision/broad_phase/grid.c
+        physics/opus/collision/broad_phase/SAP.c
+        physics/opus/geometry/polygon.c
+        physics/opus/geometry/circle.c
+        physics/opus/geometry/shape.c
+        physics/opus/collision/contact/v_clip.c
+        physics/opus/collision/contact/contacts.c
+        physics/opus/collision/contact/sleeping.c
+        physics/opus/dynamics/body.c
+        physics/opus/world.c
 
         # PATHFINDING
         pathfinding/finder/d_star_lite/map.h pathfinding/finder/d_star_lite/map.c
@@ -50,38 +65,40 @@ add_library(opus
 
         # BRAIN
         brain/ann.h brain/ann.c
+        brain/lstm.h brain/lstm.c
 
         # MATH
         math/math.h math/math.c
+        math/autodiff.h math/autodiff.c
         math/geometry.h math/geometry.c
         math/bresenham.h math/bresenham.c
-        math/delaunay.h math/delaunay.c
-        math/dubins_curve.h math/dubins_curve.c
-        math/interpolate.h math/interpolate.c
-        math/polynomial.h math/polynomial.c
-        math/reeds_shepp_curve.h math/reeds_shepp_curve.c
+        math/polygon/delaunay.h math/polygon/delaunay.c
+        math/polygon/polygon.h
+        math/polygon/clip.c
+        math/polygon/tessellate.c
+        math/polygon/utils.c
+        math/curve/dubins_curve.h math/curve/dubins_curve.c
+        math/curve/spline.h math/curve/spline.c
+        math/curve/reeds_shepp_curve.h math/curve/reeds_shepp_curve.c
         external/predicates.c
 
-        # RENDER
-        render/glad/glad.h render/glad/glad.c
-        render/color.h
-        render/render.h
-        render/render_funcs.h render/render_funcs.c
-        render/render_utils.h render/render_utils.c
-
-        # ENGINE
-        engine/plugins/input_manager.c
-        engine/plugins/vector_graphics.c
-        engine/engine.h engine/engine.c
-        engine/gui.h engine/gui.c
-
-        # GAME
-        game/agents.h game/agents.c
+        # ?
+        _/agents.h _/agents.c
 
         # UTILS
         utils/utils.h utils/utils.c
         utils/event.h utils/event.c
         utils/slre.h utils/slre.c
+
+        # vg
+        external/glad/glad.h external/glad/glad.c
+        vg/vg_color.h vg/vg_color.c
+        vg/vg.h vg/vg.c
+        vg/vg_gl.h vg/vg_gl.c
+        vg/vg_engine.h vg/vg_engine.c
+        vg/vg_input.h vg/vg_input.c
+        vg/vg_utils.h vg/vg_utils.c
+        vg/vg_gui.h vg/vg_gui.c
         )
 set_target_properties(opus PROPERTIES LINKER_LANGUAGE C)
 target_include_directories(opus PUBLIC ./)
@@ -93,14 +110,14 @@ target_link_libraries(opus m)
 #    target_link_libraries(opus core_render)
 #endif ()
 
-add_subdirectory(render/pluto)
+add_subdirectory(vg/pluto)
 target_link_libraries(opus plutovg)
 
 # link opengl and glfw library
 if (CORE_BUILDING_PLATFORM STREQUAL PLATFORM_WINDOWS)
     target_link_libraries(opus gdi32 opengl32 glfw3)
 elseif (CORE_BUILDING_PLATFORM STREQUAL PLATFORM_LINUX)
-    target_link_libraries(core_render dl GL glfw)
+    target_link_libraries(opus dl GL glfw)
 elseif (CORE_BUILDING_PLATFORM STREQUAL PLATFORM_EMSCRIPTEN)
     #    target_link_libraries(core_render glfw)
 else ()

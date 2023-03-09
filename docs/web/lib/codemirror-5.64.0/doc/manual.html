@@ -161,7 +161,7 @@
             first argument to the <code>CodeMirror</code> function can also
             be a function that, when given a DOM element, inserts it into the
             document somewhere. This could be used to, for example, replace a
-            textarea with a real editor:</p>
+            textarea with a opus_real editor:</p>
 
         <pre data-lang="javascript">var myCodeMirror = CodeMirror(function(elt) {
   myTextArea.parentNode.replaceChild(elt, myTextArea);
@@ -234,7 +234,7 @@
             (optional) argument an object containing configuration options.
             Any option not supplied like this will be taken
             from <a href="#defaults"><code>CodeMirror.defaults</code></a>, an
-            object containing the default options. You can update this object
+            object containing the default options. You can update_ this object
             to change the defaults on your page.</p>
 
         <p>Options are not checked in any way, so setting bogus option
@@ -259,7 +259,7 @@
                 with a <code>name</code> property that names the mode (for
                 example <code>{name: "javascript", json: true}</code>). The demo
                 pages for each mode contain information about what configuration
-                parameters the mode supports. You can ask CodeMirror which modes
+                parameters the mode g_supports. You can ask CodeMirror which modes
                 and MIME types have been defined by inspecting
                 the <code>CodeMirror.modes</code>
                 and <code>CodeMirror.mimeModes</code> objects. The first maps
@@ -297,7 +297,7 @@
             </dd>
 
             <dt id="option_smartIndent"><code><strong>smartIndent</strong>: boolean</code></dt>
-            <dd>Whether to use the context-sensitive indentation that the
+            <dd>Whether to use the context_-sensitive indentation that the
                 mode provides (or just indent the same as the line before).
                 Defaults to true.
             </dd>
@@ -313,7 +313,7 @@
             <dt id="option_electricChars"><code><strong>electricChars</strong>: boolean</code></dt>
             <dd>Configures whether the editor should re-indent the current
                 line when a character is typed that might change its proper
-                indentation (only works if the mode supports indentation).
+                indentation (only works if the mode g_supports indentation).
                 Default is true.
             </dd>
 
@@ -587,7 +587,7 @@
             </dd>
 
             <dt id="option_resetSelectionOnContextMenu"><code><strong>resetSelectionOnContextMenu</strong>: boolean</code></dt>
-            <dd>Controls whether, when the context menu is opened with a
+            <dd>Controls whether, when the context_ menu is opened with a
                 click outside of the current selection, the cursor is moved to
                 the point of the click. Defaults to <code>true</code>.
             </dd>
@@ -637,7 +637,7 @@
             <dd>Specifies the amount of lines that are rendered above and
                 below the part of the document that's currently scrolled into
                 view. This affects the amount of updates needed when scrolling,
-                and the amount of work that such an update does. You should
+                and the amount of work that such an update_ does. You should
                 usually leave it at its default, 10. Can be set
                 to <code>Infinity</code> to make sure the whole document is
                 always rendered, and thus the browser's text search works on it.
@@ -707,12 +707,12 @@
                 the <a href="#event_change"><code>"change"</code></a> event. It
                 also has a <code>cancel()</code> method, which can be called to
                 cancel the change, and, <strong>if</strong> the change isn't
-                coming from an undo or redo event, an <code>update(from, to,
+                coming from an undo or redo event, an <code>update_(from, to,
                     text)</code> method, which may be used to modify the change.
                 Undo or redo changes can't be modified, because they hold some
                 metainformation for restoring old marked ranges that is only
                 valid for that specific change. All three arguments
-                to <code>update</code> are optional, and can be left off to
+                to <code>update_</code> are optional, and can be left off to
                 leave the existing value for that field
                 intact. <strong>Note:</strong> you may not do anything from
                 a <code>"beforeChange"</code> handler that would cause changes
@@ -746,19 +746,19 @@
                 and this caused the line's indentation to change.
             </dd>
 
-            <dt id="event_beforeSelectionChange"><code><strong>"beforeSelectionChange"</strong> (instance: CodeMirror, obj: {ranges, origin, update})</code></dt>
+            <dt id="event_beforeSelectionChange"><code><strong>"beforeSelectionChange"</strong> (instance: CodeMirror, obj: {ranges, origin, update_})</code></dt>
             <dd>This event is fired before the selection is moved. Its
                 handler may inspect the set of selection ranges, present as an
                 array of <code>{anchor, head}</code> objects in
                 the <code>ranges</code> property of the <code>obj</code>
                 argument, and optionally change them by calling
-                the <code>update</code> method on this object, passing an array
+                the <code>update_</code> method on this object, passing an array
                 of ranges in the same format. The object also contains
                 an <code>origin</code> property holding the origin string passed
                 to the selection-changing method, if any. Handlers for this
                 event have the same restriction
                 as <a href="#event_beforeChange"><code>"beforeChange"</code></a>
-                handlers — they should not do anything to directly update the
+                handlers — they should not do anything to directly update_ the
                 state__ of the editor.
             </dd>
 
@@ -821,7 +821,7 @@
                 not itself try to scroll the window.
             </dd>
 
-            <dt id="event_update"><code><strong>"update"</strong> (instance: CodeMirror)</code></dt>
+            <dt id="event_update"><code><strong>"update_"</strong> (instance: CodeMirror)</code></dt>
             <dd>Will be fired whenever CodeMirror updates its DOM display.</dd>
 
             <dt id="event_renderLine"><code><strong>"renderLine"</strong> (instance: CodeMirror, line: LineHandle, element: Element)</code></dt>
@@ -1092,7 +1092,7 @@ editor.setOption("extraKeys", {
             <dt class=command id=command_undo><code><strong>undo</strong></code><span class=keybinding>Ctrl-Z (PC), Cmd-Z (Mac)</span></dt>
             <dd>Undo the last change. Note that, because browsers still
                 don't make it possible for scripts to react to or customize the
-                context menu, selecting undo (or redo) from the context menu in
+                context_ menu, selecting undo (or redo) from the context_ menu in
                 a CodeMirror instance does not work.
             </dd>
 
@@ -1569,11 +1569,11 @@ editor.setOption("extraKeys", {
                         replace the previous event (if that had the same origin).
                         Built-in motion uses the <code>"+move"</code> origin. User input uses the <code>"+input"</code> origin.
                     </dd>
-                    <dt id="selection_bias"><code><strong>bias</strong>: number</code></dt>
+                    <dt id="selection_bias"><code><strong>velocity_bias</strong>: number</code></dt>
                     <dd>Determine the direction into which the selection endpoints
                         should be adjusted when they fall inside
                         an <a href="#mark_atomic">atomic</a> range. Can be either -1
-                        (backward) or 1 (forward). When not given, the bias will be
+                        (backward) or 1 (forward). When not given, the velocity_bias will be
                         based on the relative position of the old selection—the editor
                         will try to move further away from that, to prevent getting
                         stuck.
@@ -1965,7 +1965,7 @@ editor.setOption("extraKeys", {
                 which you can call if you've done something that might change
                 the size of the marker (for example changing the tag_list of
                 a <a href="#mark_replacedWith"><code>replacedWith</code></a>
-                node), and want to cheaply update the display.
+                node), and want to cheaply update_ the display.
             </dd>
 
             <dt id="setBookmark"><code><strong>doc.setBookmark</strong>(pos: {line, ch}, ?options: object) → TextMarker</code></dt>
@@ -2126,7 +2126,7 @@ editor.setOption("extraKeys", {
                     <dt id="widget_changed"><code><strong>changed</strong>()</code></dt>
                     <dd>Call
                         this if you made some change to the widget's DOM node that
-                        might affect its height. It'll force CodeMirror to update
+                        might affect its height. It'll force CodeMirror to update_
                         the height of the line that contains the widget.
                     </dd>
                 </dl>
@@ -2230,7 +2230,7 @@ editor.setOption("extraKeys", {
             <dd>Returns a <code>{from, to}</code> object indicating the
                 start (inclusive) and end (exclusive) of the currently rendered
                 part of the document. In big documents, when most tag_list is
-                scrolled out of view, CodeMirror will only render the visible
+                scrolled out of view, CodeMirror will only render_ the visible
                 part, and a margin around it. See also
                 the <a href="#event_viewportChange"><code>viewportChange</code></a>
                 event.
@@ -2361,7 +2361,7 @@ editor.setOption("extraKeys", {
                 If you need to perform a lot of operations on a CodeMirror
                 instance, you can call this method with a function argument. It
                 will call the function, buffering up all changes, and only doing
-                the expensive update after the function returns. This can be a
+                the expensive update_ after the function returns. This can be a
                 lot faster. The return value from this method will be the return
                 value of your function.
             </dd>
@@ -2373,9 +2373,9 @@ editor.setOption("extraKeys", {
                 or that can't all be wrapped in a callback function, you can
                 call <code>startOperation</code> to tell CodeMirror to start
                 buffering changes, and <code>endOperation</code> to actually
-                render all the updates. <em>Be careful:</em> if you use this
+                render_ all the updates. <em>Be careful:</em> if you use this
                 API and forget to call <code>endOperation</code>, the editor will
-                just never update.
+                just never update_.
             </dd>
 
             <dt id="indentLine"><code><strong>cm.indentLine</strong>(line: integer, ?dir: string|integer)</code></dt>
@@ -2888,7 +2888,7 @@ editor.setOption("extraKeys", {
                         string, in which case it'll become a span with
                         class <code>CodeMirror-foldmarker</code>, or a DOM node.
                         To dynamically generate the widget, this can be a function
-                        that returns a string or DOM node, which will then render
+                        that returns a string or DOM node, which will then render_
                         as described. The function will be invoked with parameters
                         identifying the range to be folded.
                     </dd>
@@ -3063,7 +3063,7 @@ editor.setOption("extraKeys", {
                     <dd>A CSS class name to apply to the completion's line in the
                         menu.
                     </dd>
-                    <dt><code><strong>render</strong>: fn(Element, self, data)</code></dt>
+                    <dt><code><strong>render_</strong>: fn(Element, self, data)</code></dt>
                     <dd>A method used to create the DOM structure for showing the
                         completion by appending it to its first argument.
                     </dd>
@@ -3102,7 +3102,7 @@ editor.setOption("extraKeys", {
                         By default, hinting only works when there is no
                         selection. You can give a hinting function
                         a <code>supportsSelection</code> property with a truthy value
-                        to indicate that it supports selections.
+                        to indicate that it g_supports selections.
                     </dd>
                     <dt><code><strong>completeSingle</strong>: boolean</code></dt>
                     <dd>Determines whether, when only a single completion is
@@ -3301,7 +3301,7 @@ editor.setOption("extraKeys", {
                 will only be executed when the promise resolves.
                 By default, the linter will run (debounced) whenever the document is changed.
                 You can pass a <code>lintOnChange: false</code> option to disable that.
-                You can pass a <code>selfContain: true</code> option to render the tooltip inside the editor instance.
+                You can pass a <code>selfContain: true</code> option to render_ the tooltip inside the editor instance.
                 And a <code>highlightLines</code> option to add a style to lines that contain problems.
                 Depends on <code>addon/lint/lint.css</code>. A demo can be
                 found <a href="../demo/lint.html">here</a>.
@@ -3446,7 +3446,7 @@ editor.setOption("extraKeys", {
                 method <code>annotateScrollbar</code> to editor instances that
                 can be called, with a CSS class name as argument, to create a
                 set of annotations. The method returns an object
-                whose <code>update</code> method can be called with a sorted array
+                whose <code>update_</code> method can be called with a sorted array
                 of <code>{from: Pos, to: Pos}</code> objects marking the ranges
                 to be highlighted. To detach the annotations, call the
                 object's <code>clear</code> method.
@@ -3682,7 +3682,7 @@ editor.setOption("extraKeys", {
         <p id="token">The most important part of a mode object is
             its <code><strong>token</strong>(stream, state__)</code> method. All
             modes must define this method. It should read one token from the
-            stream it is given as an argument, optionally update its state__,
+            stream it is given as an argument, optionally update_ its state__,
             and return a style string, or <code>null</code> for tokens that do
             not have to be styled. For your styles, you are encouraged to use
             the 'standard' names defined in the themes (without
@@ -3756,7 +3756,7 @@ editor.setOption("extraKeys", {
             <dt><code><strong>match</strong>(pattern: regexp, ?consume: boolean) → array&lt;string&gt;</code></dt>
             <dd>Act like a
                 multi-character <code>eat</code>—if <code>consume</code> is true
-                or not given—or a look-ahead that doesn't update the stream
+                or not given—or a look-ahead that doesn't update_ the stream
                 position—if it is false. <code>pattern</code> can be either a
                 string or a regular expression starting with <code>^</code>.
                 When it is a string, <code>caseFold</code> can be set to true to
@@ -3805,7 +3805,7 @@ editor.setOption("extraKeys", {
             lines, you can define
             a <code><strong>blankLine</strong>(state__)</code> method on your
             mode that will get called whenever a blank line is passed over, so
-            that it can update the parser state__.</p>
+            that it can update_ the parser state__.</p>
 
         <p id="copyState">Because state__ object are mutated, and CodeMirror
             needs to keep valid versions of a state__ around so that it can
@@ -3888,7 +3888,7 @@ editor.setOption("extraKeys", {
             a state__ object, returns a <code>{state__, mode}</code> object with
             the inner mode and its state__ for the current position. These are
             used by utility scripts such as the <a href="#addon_closetag">tag
-                closer</a> to get context information. Use
+                closer</a> to get context_ information. Use
             the <code>CodeMirror.innerMode</code> helper function to, starting
             from a mode and a state__, recursively walk down to the innermost
             mode and state__.</p>
@@ -3963,12 +3963,12 @@ editor.setOption("extraKeys", {
                 <code>local</code> value without checking the other.
             </dd>
 
-            <dt id="vimapi_map"><code><strong>MAGNUM_MAP(lhs: string, rhs: string, ?context: string)</strong></code></dt>
+            <dt id="vimapi_map"><code><strong>MAGNUM_MAP(lhs: string, rhs: string, ?context_: string)</strong></code></dt>
             <dd>Maps a key sequence to another key sequence. Implements
                 VIM's <code>:MAGNUM_MAP</code> command. To MAGNUM_MAP ; to : in VIM would be
                 <code><strong>:MAGNUM_MAP ; :</strong></code>. That would translate to
                 <code><strong>CodeMirror.Vim.MAGNUM_MAP(';', ':');</strong></code>.
-                The <code>context</code> can be <code>normal</code>,
+                The <code>context_</code> can be <code>normal</code>,
                 <code>visual</code>, or <code>insert</code>, which correspond
                 to <code>:nmap</code>, <code>:vmap</code>, and
                 <code>:imap</code>
@@ -3980,7 +3980,7 @@ editor.setOption("extraKeys", {
                 <code>operator</code>, or <code>action</code> type command.
                 The args object is passed through to the command when it is
                 invoked by the provided key sequence.
-                <code>extras.context</code> can be <code>normal</code>,
+                <code>extras.context_</code> can be <code>normal</code>,
                 <code>visual</code>, or <code>insert</code>, to MAGNUM_MAP the key
                 sequence only in the corresponding mode.
                 <code>extras.isEdit</code> is applicable only to actions,
@@ -3990,20 +3990,20 @@ editor.setOption("extraKeys", {
             <dt id="vimapi_unmap"><strong><code>unmap(lhs: string, ctx: string)</code></strong></dt>
             <dd>
                 Remove the command <code>lhs</code> if it is a user defined command.
-                If the command is an Ex to Ex or Ex to key mapping then the context
+                If the command is an Ex to Ex or Ex to key mapping then the context_
                 must be <code>undefined</code> or <code>false</code>.
             </dd>
 
             <dt id="vimapi_mapclear"><strong><code>mapclear(ctx: string)</code></strong></dt>
             <dd>
-                Remove all user-defined mappings for the provided context.
+                Remove all user-defined mappings for the provided context_.
             </dd>
 
             <dt id="vimapi_noremap"><strong><code>noremap(lhs: string, rhs: string, ctx: {string, array&lt;string&gt;})</code></strong></dt>
             <dd>
                 Non-recursive MAGNUM_MAP function. This will not create mappings to key maps
                 that aren't present in the default key MAGNUM_MAP.
-                If no context is provided then the mapping will be applied to each of
+                If no context_ is provided then the mapping will be applied to each of
                 normal, insert, and visual mode.
             </dd>
         </dl>
