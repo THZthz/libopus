@@ -70,17 +70,24 @@ opus_physics_world *opus_physics_world_create(void)
 		opus_arr_create(world->constraints, sizeof(opus_constraint *));
 		opus_arr_create(world->delta_history, sizeof(opus_real));
 
+		/* all magic XD */
 		world->velocity_iteration = 6;
-		world->joint_iteration    = 6;
+		world->velocity_bias      = 0.4;
 		world->position_iteration = 20;
-		world->position_bias      = 0.012; /* 4 - 0.1 */
-		world->velocity_bias      = 0.33;
-		world->constraint_bias    = 0.2;
-		world->position_slop      = 0.01;
+		world->position_bias      = 0.012;
+		world->constraint_bias    = 0.5;
+		world->position_slop      = 0.02;
 		world->rest_factor        = 0.01;
 		opus_vec2_set(&world->gravity, 0, 0);
+		world->accumulated_normal_impulse_damping  = 0.3;
+		world->accumulated_tangent_impulse_damping = 0.3;
+		world->body_min_motion_bias                = 0.9;
+		world->body_wake_motion_threshold          = 0.03;
+		world->body_sleep_motion_threshold         = 0.7;
+		world->body_sleep_counter_threshold        = 80;
+		world->body_sleep_delay_counter            = 10;
 
-		world->time_scale   = 1;
+		world->time_scale   = 10;
 		world->elapsed_time = 0.05;
 		world->delta_min    = 0.7 * world->elapsed_time;
 		world->delta_max    = 2 * world->elapsed_time;
@@ -130,12 +137,12 @@ void opus_physics_world_destroy(opus_physics_world *world)
 {
 	destroy_contacts_(world);
 	opus_hashmap_done(&world->contacts);
-	destroy_bodies_(world);
-	opus_arr_destroy(world->bodies);
 	destroy_joints_(world);
 	opus_arr_destroy(world->joints);
 	destroy_constraints_(world);
 	opus_arr_destroy(world->constraints);
+	destroy_bodies_(world);
+	opus_arr_destroy(world->bodies);
 	opus_arr_destroy(world->delta_history);
 	OPUS_FREE(world);
 }
@@ -156,14 +163,20 @@ static void apply_gravity_(opus_physics_world *world, opus_real dt)
 	}
 }
 
+static void integrate_forces_(opus_physics_world *world, opus_real dt)
+{
+	size_t i;
+	for (i = 0; i < opus_arr_len(world->bodies); i++)
+		opus_body_integrate_forces(world->bodies[i], dt);
+}
+
 static void prepare_resolution_(opus_physics_world *world, opus_contacts *contacts, opus_contact *contact)
 {
 	opus_body *A, *B;
-	opus_vec2  impulse, pa, pb, ra, rb, n, t, va, vb, dv;
+	opus_vec2  pa, pb, ra, rb, n, t, va, vb, dv;
 	opus_real  emn, emt;
 	opus_real  ra_n, rb_n, ra_t, rb_t;
 	opus_vec2  bias;
-	opus_real  restitution;
 
 	contact->is_active = 1;
 
@@ -199,12 +212,6 @@ static void prepare_resolution_(opus_physics_world *world, opus_contacts *contac
 	bias = opus_vec2_scale(dv, -contacts->restitution);
 
 	contact->restitution_bias = bias;
-
-	/* warm start */
-	impulse.x = n.x * contact->normal_impulse + t.x * contact->tangent_impulse;
-	impulse.y = n.y * contact->normal_impulse + t.y * contact->tangent_impulse;
-	opus_body_apply_impulse(A, opus_vec2_neg(impulse), ra);
-	opus_body_apply_impulse(B, (impulse), rb);
 }
 
 static void check_potential_collision_pair_(opus_body *A, opus_body *B, opus_mat2d ta, opus_mat2d tb, void *data)
@@ -218,7 +225,7 @@ static void check_potential_collision_pair_(opus_body *A, opus_body *B, opus_mat
 	opus_contacts      *contacts, key, *key_ptr;
 	opus_physics_world *world;
 
-	opus_vec2 pa, pb;
+	opus_vec2 pa, pb, impulse;
 
 	world = data;
 
@@ -262,11 +269,19 @@ static void check_potential_collision_pair_(opus_body *A, opus_body *B, opus_mat
 			pa = cr.supports[i][0];
 			pb = cr.supports[i][1];
 
+			/* ? don't know how to achieve time coherence, this is a naive solution */
 			for (j = 0; j < opus_arr_len(contacts->contacts); j++) {
 				contact = contacts->contacts[j];
-				if (opus_vec2_equal_(contact->pa, pa, 0.01) ||
-				    opus_vec2_equal_(contact->pb, pa, 0.01)) {
+				if (opus_vec2_equal_(contact->pa, pa, 0.01) && opus_vec2_equal_(contact->pb, pb, 0.01)) {
+					contact->normal_impulse *= world->accumulated_normal_impulse_damping;
+					contact->tangent_impulse *= world->accumulated_tangent_impulse_damping;
 					prepare_resolution_(world, contacts, contact);
+
+					/* warm start */
+					impulse.x = contact->normal.x * contact->normal_impulse + contact->tangent.x * contact->tangent_impulse;
+					impulse.y = contact->normal.y * contact->normal_impulse + contact->tangent.y * contact->tangent_impulse;
+					opus_body_apply_impulse(A, opus_vec2_neg(impulse), contact->ra);
+					opus_body_apply_impulse(B, (impulse), contact->rb);
 					break;
 				}
 			}
@@ -275,9 +290,10 @@ static void check_potential_collision_pair_(opus_body *A, opus_body *B, opus_mat
 			if (j == opus_arr_len(contacts->contacts)) {
 				contact = opus_contact_create(A, B, pa, pb, or.normal, or.separation);
 				opus_arr_push(contacts->contacts, &contact);
+				contact->ref_idx = cr.ref_idx;
+				contact->inc_idx = cr.inc_idx;
+				prepare_resolution_(world, contacts, contact);
 			}
-
-			prepare_resolution_(world, contacts, contact);
 		}
 	}
 }
@@ -338,12 +354,12 @@ static void apply_tangent_impulse_(opus_physics_world *world, opus_contacts *con
 	max_friction = contacts->friction * contact->normal_impulse;
 
 	old_tangent_impulse = contact->tangent_impulse;
-	if (dv_t > 0 && dv_t * dv_t < world->rest_factor)
-		contact->tangent_impulse = 0;
+	//	if (dv_t > 0 && dv_t * dv_t < world->rest_factor)
+	//		contact->tangent_impulse = 0;
 	contact->tangent_impulse = opus_clamp(old_tangent_impulse + lambda_t, -max_friction, max_friction);
 	lambda_t                 = contact->tangent_impulse - old_tangent_impulse;
 
-	impulse = opus_vec2_scale(contact->tangent, lambda_t / opus_arr_len(contacts->contacts));
+	impulse = opus_vec2_scale(contact->tangent, lambda_t);
 	opus_body_apply_impulse(A, impulse, contact->ra);
 	opus_body_apply_impulse(B, opus_vec2_neg(impulse), contact->rb);
 }
@@ -570,15 +586,19 @@ void opus_physics_world_step(opus_physics_world *world, opus_real dt)
 	dt = get_nice_dt_(world, dt);
 	/* apply gravity force to rigid bodies and integrate forces, affecting their velocity */
 	apply_gravity_(world, dt);
+	integrate_forces_(world, dt);
+//	opus_sleeping_update(world, dt);
 	/* check collision and generate contacts, plus warm start */
 	retrieve_collision_info_(world, dt);
 	clear_inactive_contacts_(world);
 	/* prepare to resolve constraint (other type of constraints and joints) */
 	prepare_(world, dt);
+//	opus_sleeping_before_resolution(world);
 	/* solve velocity constraints */
 	solve_velocity_(world, dt);
 	/* integrate velocity, affect their position */
 	integrate_velocity_(world, dt);
+//	opus_sleeping_after_collision(world, dt);
 	/* solve position constraints, mainly to supplement the resolution of velocity */
 	solve_position_(world, dt);
 	clear_forces_(world);

@@ -70,17 +70,26 @@ typedef void (*opus_constraint_solve_velocity_cb)(opus_constraint *constraint, o
 typedef void (*opus_constraint_solve_position_cb)(opus_constraint *constraint, opus_real dt);
 
 struct opus_physics_world {
-	int velocity_iteration;
-	int position_iteration;
-	int joint_iteration;
+	int velocity_iteration; /* rest contact resolution iterations */
+	int position_iteration; /* position correction iterations */
 	int draw_contacts;
 
 	opus_vec2 gravity;
-	opus_real position_slop;
-	opus_real position_bias;
-	opus_real velocity_bias;
+
+	opus_real position_slop; /* maximum penetration allowed */
+	opus_real position_bias; /* affect the adjusting strength of position error */
+	opus_real velocity_bias; /* affect the normal impulse generated from rest contact */
 	opus_real constraint_bias;
-	opus_real rest_factor;
+	opus_real rest_factor; /* if relative velocity in normal is smaller than this, cancel resolution in normal direction */
+	opus_real accumulated_normal_impulse_damping;
+	opus_real accumulated_tangent_impulse_damping;
+
+	int       enable_sleeping;
+	opus_real body_min_motion_bias;
+	opus_real body_wake_motion_threshold;
+	opus_real body_sleep_motion_threshold;
+	int       body_sleep_counter_threshold;
+	int       body_sleep_delay_counter;
 
 	opus_body       **bodies;
 	opus_joint      **joints;
@@ -126,10 +135,13 @@ struct opus_body {
 	opus_real restitution;
 
 	opus_real motion;
+	opus_real prev_motion;
 
 	opus_body **parts;
 
 	int is_sleeping;
+	int sleep_counter;
+	int joint_count;
 };
 
 struct opus_shape {

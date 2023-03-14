@@ -56,7 +56,8 @@ struct opus_overlap_result {
 struct opus_clip_result {
 	opus_shape *A, *B;
 
-	size_t    n_support;
+	uint64_t  ref_idx, inc_idx;
+	uint64_t  n_support;
 	opus_vec2 supports[2][2];
 };
 
@@ -87,6 +88,7 @@ struct opus_contacts {
 
 struct opus_contact {
 	int        is_active;
+	uint64_t   ref_idx, inc_idx;
 	opus_body *A, *B;
 	opus_vec2  pa, pb;
 	opus_real  effective_mass_normal;
@@ -158,8 +160,16 @@ void                      opus_constraint_distance_prepare(opus_constraint *cons
 void                      opus_constraint_distance_solve_velocity(opus_constraint *constraint, opus_real dt);
 
 opus_joint_revolute *opus_joint_revolute_create(opus_body *A, opus_body *B, opus_vec2 offset_a, opus_vec2 offset_b);
+void                 opus_joint_revolute_destroy(opus_joint_revolute *joint);
 void                 opus_joint_revolute_prepare(opus_joint *joint, opus_real dt);
 void                 opus_joint_revolute_solve_velocity(opus_joint *joint, opus_real dt);
+
+void opus_sleeping_wake_up(opus_body *body);
+void opus_sleeping_fall_asleep(opus_physics_world *world, opus_body *body);
+void opus_sleeping_update(opus_physics_world *world, opus_real dt);
+void opus_sleeping_before_resolution(opus_physics_world *world);
+void opus_sleeping_after_collision(opus_physics_world *world, opus_real dt);
+
 #ifdef __cplusplus
 };
 #endif /* __cplusplus */

@@ -24,31 +24,19 @@ opus_body *opus_body_init(opus_body *body)
 	if (body) {
 		body->type        = OPUS_BODY_DYNAMIC;
 		body->id          = opus_get_physics_id();
-		body->shape       = NULL;
-		body->bitmask     = 1;
-		body->area        = 0;
+		body->bitmask     = 0x0001;
 		body->density     = 0.002;
-		body->mass        = 0;
 		body->inv_mass    = OPUS_REAL_MAX;
 		body->inertia     = OPUS_REAL_MAX;
-		body->inv_inertia = 0;
-		opus_vec2_set(&body->position, 0, 0);
-		opus_vec2_set(&body->velocity, 0, 0);
-		body->rotation         = 0;
-		body->angular_velocity = 0;
-		opus_vec2_set(&body->force, 0, 0);
-		body->torque      = 0;
 		body->friction    = 0.01;
-		body->motion      = 0;
 		body->restitution = 0.01;
-		body->is_sleeping = 0;
 		opus_arr_create(body->parts, sizeof(opus_body *));
 		opus_arr_push(body->parts, &body);
 	}
 	return body;
 }
 
-opus_body *opus_body_create(void) { return opus_body_init(malloc(sizeof(opus_body))); }
+opus_body *opus_body_create(void) { return opus_body_init(OPUS_CALLOC(1, sizeof(opus_body))); }
 
 void opus_body_done(opus_body *body)
 {
@@ -80,7 +68,8 @@ void opus_body_apply_force(opus_body *body, opus_vec2 force, opus_vec2 r)
 
 void opus_body_set_position(opus_body *body, opus_vec2 position)
 {
-	body->position = position;
+	body->position    = position;
+	body->is_sleeping = 0;
 }
 
 void opus_body_clear_force(opus_body *body)
@@ -115,8 +104,8 @@ void opus_body_integrate_velocity(opus_body *body, opus_real dt)
 
 	OPUS_RETURN_IF(, body->type == OPUS_BODY_STATIC || body->is_sleeping);
 
-	body->velocity.x *= 0.99;
-	body->velocity.y *= 0.99;
+	body->velocity.x *= 0.9;
+	body->velocity.y *= 0.9;
 
 	dx = body->velocity.x * dt;
 	dy = body->velocity.y * dt;

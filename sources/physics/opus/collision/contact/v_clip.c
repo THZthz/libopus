@@ -45,14 +45,16 @@ static opus_vec2 VCLIP_intersect_(opus_vec2 a1, opus_vec2 a2, opus_vec2 b1, opus
  */
 static int VCLIP_polygon_polygon_find_clip_edge_(opus_vec2 *inc_s, opus_vec2 *inc_e,
                                                  opus_vec2 *ref_s, opus_vec2 *ref_e,
+                                                 uint64_t *ref_idx, uint64_t *inc_idx,
                                                  opus_polygon *A,
                                                  opus_polygon *B, opus_mat2d ta,
                                                  opus_mat2d tb,
                                                  opus_vec2  normal)
 {
-	size_t    index_sa, index_sb; /* index of support point */
+	uint64_t  index_sa, index_sb; /* index of support point */
 	opus_vec2 sa, sb;             /* support point of A and B */
 
+	uint64_t  idx1, idx2;
 	opus_vec2 p1, p2;
 	opus_real r1, r2;
 
@@ -62,32 +64,40 @@ static int VCLIP_polygon_polygon_find_clip_edge_(opus_vec2 *inc_s, opus_vec2 *in
 	sa = opus_mat2d_pre_mul_vec(ta, sa);
 	sb = opus_mat2d_pre_mul_vec(tb, sb);
 
-	p1 = B->vertices[(B->n + index_sb - 1) % B->n]; /* prev */
-	p2 = B->vertices[(index_sb + 1) % B->n];        /* next */
-	p1 = opus_mat2d_pre_mul_vec(tb, p1);
-	p2 = opus_mat2d_pre_mul_vec(tb, p2);
-	r1 = opus_vec2_dot(opus_vec2_to(p1, sb), normal);
-	r2 = opus_vec2_dot(opus_vec2_to(p2, sb), normal);
+	idx1 = (B->n + index_sb - 1) % B->n;
+	idx2 = (index_sb + 1) % B->n;
+	p1   = B->vertices[idx1]; /* prev */
+	p2   = B->vertices[idx2]; /* next */
+	p1   = opus_mat2d_pre_mul_vec(tb, p1);
+	p2   = opus_mat2d_pre_mul_vec(tb, p2);
+	r1   = opus_vec2_dot(opus_vec2_to(p1, sb), normal);
+	r2   = opus_vec2_dot(opus_vec2_to(p2, sb), normal);
 	if (opus_abs(r1) < opus_abs(r2)) {
-		*inc_s = p1;
-		*inc_e = sb;
+		*inc_s   = p1;
+		*inc_e   = sb;
+		*inc_idx = idx1;
 	} else {
-		*inc_s = sb;
-		*inc_e = p2;
+		*inc_s   = sb;
+		*inc_e   = p2;
+		*inc_idx = idx2;
 	}
 
-	p1 = A->vertices[(A->n + index_sa - 1) % A->n]; /* prev */
-	p2 = A->vertices[(index_sa + 1) % A->n];        /* next */
-	p1 = opus_mat2d_pre_mul_vec(ta, p1);
-	p2 = opus_mat2d_pre_mul_vec(ta, p2);
-	r1 = opus_vec2_dot(opus_vec2_to(p1, sa), normal);
-	r2 = opus_vec2_dot(opus_vec2_to(p2, sa), normal);
+	idx1 = (A->n + index_sa - 1) % A->n;
+	idx2 = (index_sa + 1) % A->n;
+	p1   = A->vertices[idx1]; /* prev */
+	p2   = A->vertices[idx2]; /* next */
+	p1   = opus_mat2d_pre_mul_vec(ta, p1);
+	p2   = opus_mat2d_pre_mul_vec(ta, p2);
+	r1   = opus_vec2_dot(opus_vec2_to(p1, sa), normal);
+	r2   = opus_vec2_dot(opus_vec2_to(p2, sa), normal);
 	if (opus_abs(r1) < opus_abs(r2)) {
-		*ref_s = p1;
-		*ref_e = sa;
+		*ref_s   = p1;
+		*ref_e   = sa;
+		*ref_idx = idx1;
 	} else {
-		*ref_s = sa;
-		*ref_e = p2;
+		*ref_s   = sa;
+		*ref_e   = p2;
+		*ref_idx = idx2;
 	}
 
 	/* compare which edge is more perpendicular to normal */
@@ -111,6 +121,7 @@ static opus_clip_result VCLIP_polygon_polygon_(opus_overlap_result overlap)
 	opus_polygon *A = (void *) overlap.A;
 	opus_polygon *B = (void *) overlap.B;
 
+	uint64_t  ref_idx, inc_idx;
 	opus_vec2 inc_s, inc_e; /* incident edge */
 	opus_vec2 ref_s, ref_e; /* reference edge */
 	opus_vec2 ref_n;        /* normal of reference edge */
@@ -121,9 +132,11 @@ static opus_clip_result VCLIP_polygon_polygon_(opus_overlap_result overlap)
 	int       is_ref_on_A;
 
 	/* get reference edge and incident edge */
-	is_ref_on_A = VCLIP_polygon_polygon_find_clip_edge_(&inc_s, &inc_e, &ref_s, &ref_e, A, B,
-	                                                    overlap.transform_a, overlap.transform_b,
+	is_ref_on_A = VCLIP_polygon_polygon_find_clip_edge_(&inc_s, &inc_e, &ref_s, &ref_e,
+	                                                    &ref_idx, &inc_idx,
+	                                                    A, B, overlap.transform_a, overlap.transform_b,
 	                                                    overlap.normal);
+	OPUS_ASSERT(is_ref_on_A);
 
 	/* notice that both clip edges have a valid direction (CCW order) */
 	ref_n = opus_vec2_norm(opus_vec2_to(ref_s, ref_e));
@@ -148,23 +161,19 @@ static opus_clip_result VCLIP_polygon_polygon_(opus_overlap_result overlap)
 	/* last we project incident edge points on reference edge */
 	p1 = opus_nearest_point_on_line(ref_s, ref_e, inc_s);
 	p2 = opus_nearest_point_on_line(ref_s, ref_e, inc_e);
+
 	/* we want [0] is the point on A, and [1] is the point on B */
 	/* just keep it in order */
-	result.n_support = 2;
-	if (is_ref_on_A) {
-		result.supports[0][0] = p1;
-		result.supports[0][1] = inc_s;
-		result.supports[1][0] = p2;
-		result.supports[1][1] = inc_e;
-	} else {
-		result.supports[0][0] = inc_s;
-		result.supports[0][1] = p1;
-		result.supports[1][0] = inc_e;
-		result.supports[1][1] = p2;
-	}
+	result.n_support      = 2;
+	result.supports[0][0] = p1;
+	result.supports[0][1] = inc_s;
+	result.supports[1][0] = p2;
+	result.supports[1][1] = inc_e;
 
-	result.A = (void *) A;
-	result.B = (void *) B;
+	result.A       = (void *) A;
+	result.B       = (void *) B;
+	result.ref_idx = ref_idx;
+	result.inc_idx = inc_idx;
 
 	return result;
 }
@@ -180,7 +189,7 @@ opus_clip_result VCLIP_polygon_circle_(opus_overlap_result overlap)
 	opus_vec2 support_a, center, support_b, p1, p2;
 	opus_vec2 ref_s, ref_e;
 	opus_real r1, r2;
-	size_t    index_support;
+	uint64_t  index_support;
 
 	OPUS_ASSERT(overlap.A->type_ == OPUS_SHAPE_POLYGON);
 	OPUS_ASSERT(overlap.B->type_ == OPUS_SHAPE_CIRCLE);

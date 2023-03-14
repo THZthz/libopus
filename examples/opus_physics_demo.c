@@ -43,6 +43,12 @@ void on_pointer_down(opus_input *input)
 	opus_body    *body;
 	opus_polygon *poly;
 
+	if (g_param.selected) {
+		opus_body_set_position(g_param.selected, g_param.pointer);
+		g_param.selected = NULL;
+		return;
+	}
+
 	for (i = 0; i < opus_arr_len(g_param.world->bodies); i++) {
 		body = g_param.world->bodies[i];
 		poly = (void *) body->shape;
@@ -54,8 +60,8 @@ void on_pointer_down(opus_input *input)
 		}
 	}
 
-	if (!clicked_a_body && g_param.selected) {
-		opus_body_set_position(g_param.selected, g_param.pointer);
+	if (!clicked_a_body) {
+		g_param.selected = NULL;
 	}
 }
 
@@ -122,55 +128,41 @@ void preload(opus_engine *engine)
 		if (1) {
 			//					 opus_physics_world_add_polygon(g_param.world, opus_vec2_(400, 400), v1, 4);
 			//					opus_physics_world_add_polygon(g_param.world,opus_vec2_(300, 400), v2, 5);
-			b       = opus_physics_world_add_rect(g_param.world, opus_vec2_(400, 700), 1200, 40, 5);
+			b       = opus_physics_world_add_rect(g_param.world, opus_vec2_(400, 700), 2200, 40, 5);
 			b->type = OPUS_BODY_STATIC;
 
 			size_t    i, j;
-			opus_real gap = 3, w = 70, h = 50, x = 350, y = -10;
-			for (i = 0; i < 1; i++) {
-				for (j = 0; j < 8; j++) {
+			opus_real gap = 3, w = 40, h = 40, x = 350, y = -10;
+			for (i = 0; i < 10; i++) {
+				for (j = 0; j < 10; j++) {
 					opus_physics_world_add_rect(g_param.world, opus_vec2_(x + (float) i * (w + gap), y + (float) j * (h + gap)), w, h, 0);
 				}
 			}
-
 
 			opus_body           *cur, *prev;
 			opus_joint_revolute *joint;
 			cur  = NULL;
 			prev = NULL;
-			x    = -100;
+			x    = -300;
 			y    = 0;
-			//			for (i = 0; i < 8; i++) {
-			//				cur = opus_physics_world_add_rect(g_param.world, opus_vec2_(x + (float) i * (w + gap), y + (float) 0 * (h + gap)), w, h, 0);
-			//				if (i == 0) {
-			//					opus_physics_world_add_distance_joint(g_param.world, cur,
-			//					                                      opus_vec2_(-w / 2, 0),
-			//					                                      opus_vec2_add(cur->position, opus_vec2_(-w / 2 - 2 * gap, 0)), 0, 10);
-			//				} else if (i == 7) {
-			//					opus_physics_world_add_distance_joint(g_param.world, cur,
-			//					                                      opus_vec2_(w / 2, 0),
-			//					                                      opus_vec2_add(cur->position, opus_vec2_(w / 2 + 2 * gap, 0)), 0, 10);
-			//				}
-			//				if (prev) {
-			//					joint            = (void *) opus_physics_world_add_revolute_joint(g_param.world, cur, prev, opus_vec2_(-w / 2 - 2 * gap, 0), opus_vec2_(w / 2 + 2 * gap, 0));
-			//					joint->stiffness = 1;
-			//				}
-			//
-			//				prev = cur;
-			//			}
+			for (i = 0; i < 8; i++) {
+				cur = opus_physics_world_add_rect(g_param.world, opus_vec2_(x + (float) i * (w + gap), y + (float) 0 * (h + gap)), w, h, 0);
+				if (i == 0) {
+					opus_physics_world_add_distance_joint(g_param.world, cur,
+					                                      opus_vec2_(-w / 2, 0),
+					                                      opus_vec2_add(cur->position, opus_vec2_(-w / 2 - 2 * gap, 0)), 0, 10);
+				} else if (i == 7) {
+					opus_physics_world_add_distance_joint(g_param.world, cur,
+					                                      opus_vec2_(w / 2, 0),
+					                                      opus_vec2_add(cur->position, opus_vec2_(w / 2 + 2 * gap, 0)), 0, 10);
+				}
+				if (prev) {
+					joint            = (void *) opus_physics_world_add_revolute_joint(g_param.world, cur, prev, opus_vec2_(-w / 2 - 2 * gap, 0), opus_vec2_(w / 2 + 2 * gap, 0));
+					joint->stiffness = 1;
+				}
 
-			//			opus_body *A = opus_physics_world_add_rect(g_param.world, opus_vec2_(400, 400), 60, 60, 0);
-			//			opus_body *B = opus_physics_world_add_rect(g_param.world, opus_vec2_(400, 450), 60, 60, 0);
-
-			//						opus_physics_world_add_distance_constraint(g_param.world, A, B, opus_vec2_(0, 0), opus_vec2_(0, 0));
-			//						opus_physics_world_add_distance_constraint(g_param.world, A, B, A->position, B->position);
-
-			//			opus_joint_revolute *joint = (void *) opus_physics_world_add_revolute_joint(g_param.world, A, B, opus_vec2_(0, 35), opus_vec2_(0, -35));
-			//			joint->stiffness           = 0.1;
-
-
-			//			opus_body *bc = opus_physics_world_add_n_polygon(g_param.world, opus_vec2_(400, 400), 60, 17);
-			//			opus_physics_world_add_distance_joint(g_param.world, bc, opus_vec2_(0, 0), bc->position, 0, 1);
+				prev = cur;
+			}
 		}
 	}
 }
@@ -371,41 +363,34 @@ void render(opus_engine *engine)
 	if (g_param.test_SAT) test_SAT();
 
 	if (g_param.test_world) {
-		//		g_param.world->velocity_iteration = 6;
-		//		g_param.world->position_iteration = 20;
-		//		g_param.world->position_bias      = 0.012; /* 4 - 0.1 */
-		//		g_param.world->velocity_bias      = 0.37;
-		//		g_param.world->constraint_bias    = 0.5;
-		//		g_param.world->position_slop      = 0.02;
-		//		g_param.world->rest_factor        = 0.01;
-
-		g_param.world->velocity_iteration = 6;
-		g_param.world->position_iteration = 20;
-		g_param.world->position_bias      = 0.012; /* 4 - 0.1 */
-		g_param.world->velocity_bias      = 0.3;
-		g_param.world->constraint_bias    = 0.5;
-		g_param.world->position_slop      = 0.02;
-		g_param.world->rest_factor        = 0.01;
-
-		g_param.world->time_scale = 10;
-
+		g_param.world->draw_contacts = 1;
+		g_param.world->enable_sleeping = 1;
 		g_param.world->gravity = opus_vec2_(0, 0.2);
 
 		opus_physics_world_step(g_param.world, engine->elapsed_time);
 
-
 		size_t i;
 		for (i = 0; i < opus_arr_len(g_param.world->bodies); i++) {
 			opus_body *b = g_param.world->bodies[i];
-			sprintf(text, "%zu", b->id);
+
+			/*sprintf(text, "%zu", b->id);
 			plutovg_text(pl, text, b->position.x, b->position.y);
 			plutovg_set_source_rgba(pl, COLOR_BLACK, 1);
-			plutovg_fill(pl);
+			plutovg_fill(pl);*/
+
 			draw_shape((void *) b->shape, (float) b->rotation, b->position);
 			plutovg_set_line_width(pl, 0.3);
 			plutovg_set_source_rgba(pl, COLOR_BLACK, 1);
-			if (g_param.selected == b) plutovg_set_line_width(pl, 1);
+			if (g_param.selected == b) {
+				plutovg_set_line_width(pl, 1);
+			}
 			plutovg_stroke(pl);
+
+			if (b->is_sleeping) {
+				draw_shape((void *) b->shape, (float) b->rotation, b->position);
+				plutovg_set_source_rgba(pl, COLOR_SLATE_GRAY1, 0.5);
+				plutovg_fill(pl);
+			}
 		}
 		for (i = 0; i < opus_arr_len(g_param.world->joints); i++) {
 			switch (g_param.world->joints[i]->type) {

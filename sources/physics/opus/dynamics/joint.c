@@ -17,14 +17,17 @@
 
 void opus_joint_destroy(opus_joint *joint)
 {
-	/*	switch (joint->type) {
-	        case OPUS_JOINT_DISTANCE:*/
-	opus_joint_distance_destroy((void *) joint);
-	/*			break;
-	        default:
-	            OPUS_WARNING("opus_joint_destroy::no matching destroying function\n");
-	            break;
-	    }*/
+	switch (joint->type) {
+		case OPUS_JOINT_DISTANCE:
+			opus_joint_distance_destroy((void *) joint);
+			break;
+		case OPUS_JOINT_REVOLUTE:
+			opus_joint_revolute_destroy((void *) joint);
+			break;
+		default:
+			OPUS_WARNING("opus_joint_destroy::no matching destroying function\n");
+			break;
+	}
 }
 
 opus_joint_distance *opus_joint_distance_create(opus_body *body, opus_vec2 offset, opus_vec2 anchor, opus_real min_distance, opus_real max_distance)
@@ -45,12 +48,15 @@ opus_joint_distance *opus_joint_distance_create(opus_body *body, opus_vec2 offse
 
 		joint->_.solve_velocity = opus_joint_distance_solve_velocity;
 		joint->_.prepare        = opus_joint_distance_prepare;
+
+		body->joint_count++;
 	}
 	return joint;
 }
 
 void opus_joint_distance_destroy(opus_joint_distance *joint)
 {
+	joint->body->joint_count--;
 	OPUS_FREE(joint);
 }
 
@@ -139,6 +145,9 @@ opus_joint_revolute *opus_joint_revolute_create(opus_body *A, opus_body *B, opus
 	if (joint) {
 		joint->_.type = OPUS_JOINT_REVOLUTE;
 
+		A->joint_count++;
+		B->joint_count ++;
+
 		joint->A       = A;
 		joint->B       = B;
 		joint->local_a = offset_a;
@@ -153,6 +162,13 @@ opus_joint_revolute *opus_joint_revolute_create(opus_body *A, opus_body *B, opus
 		joint->_.solve_velocity = opus_joint_revolute_solve_velocity;
 	}
 	return joint;
+}
+
+void opus_joint_revolute_destroy(opus_joint_revolute *joint)
+{
+	joint->A->joint_count--;
+	joint->B->joint_count--;
+	OPUS_FREE(joint);
 }
 
 static opus_real constraint_impulse_mixing_(opus_real dt, opus_real stiffness, opus_real damping)
