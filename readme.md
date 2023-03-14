@@ -4,6 +4,8 @@ Miscellaneous code written when I am **free** XD
 This project can be compiled using cmake, both windows(mingw) and linux is OK,
 requires library opengl and glfw.
 
+Please star the project if you think it is nice or want to encourage me in coding :)
+
 ## explanation for some directories
 
 - brain: simple ANN with back-propagation and LSTM(rather simple)
