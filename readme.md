@@ -17,5 +17,5 @@ requires library opengl and glfw.
 http://www.glprogramming.com/red/chapter14.html#name5
 
 #### compile using emscripten
-add `-DCMAKE_TOOLCHAIN_FILE=C:/Environment/msys64/home/amias/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake
+add `-DCMAKE_TOOLCHAIN_FILE=path/to/emsdk/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake
 --debug-output` to cmake options
