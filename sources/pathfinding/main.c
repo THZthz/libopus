@@ -56,7 +56,7 @@ void forward_star()
 	print_n(g, 4);
 
 	{
-		graph_id_t   *neighbors = malloc(sizeof(void *) * 4);
+		graph_id_t   *neighbors = OPUS_MALLOC(sizeof(void *) * 4);
 		graph_count_t count;
 		g->get_neighbors_by_id(g, 1, neighbors, &count);
 

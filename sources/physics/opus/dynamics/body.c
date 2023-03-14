@@ -27,7 +27,7 @@ opus_body *opus_body_init(opus_body *body)
 		body->shape       = NULL;
 		body->bitmask     = 1;
 		body->area        = 0;
-		body->density     = 0.001;
+		body->density     = 0.002;
 		body->mass        = 0;
 		body->inv_mass    = OPUS_REAL_MAX;
 		body->inertia     = OPUS_REAL_MAX;
@@ -48,22 +48,26 @@ opus_body *opus_body_init(opus_body *body)
 	return body;
 }
 
-opus_body *opus_body_create() { return opus_body_init(malloc(sizeof(opus_body))); }
+opus_body *opus_body_create(void) { return opus_body_init(malloc(sizeof(opus_body))); }
 
 void opus_body_done(opus_body *body)
 {
+	opus_recycle_physics_id(body->id);
 	opus_arr_destroy(body->parts);
+	opus_shape_destroy(body->shape);
 }
 
 void opus_body_destroy(opus_body *body)
 {
 	opus_body_done(body);
-	free(body);
+	OPUS_FREE(body);
 }
 
 void opus_body_apply_impulse(opus_body *body, opus_vec2 impulse, opus_vec2 r)
 {
-	body->velocity = opus_vec2_add(body->velocity, opus_vec2_scale(impulse, body->inv_mass));
+	OPUS_RETURN_IF(, body->type == OPUS_BODY_STATIC);
+	body->velocity.x += impulse.x * body->inv_mass;
+	body->velocity.y += impulse.y * body->inv_mass;
 	body->angular_velocity += body->inv_inertia * opus_vec2_cross(r, impulse);
 }
 
@@ -110,6 +114,9 @@ void opus_body_integrate_velocity(opus_body *body, opus_real dt)
 	opus_real speed, angular_speed;
 
 	OPUS_RETURN_IF(, body->type == OPUS_BODY_STATIC || body->is_sleeping);
+
+	body->velocity.x *= 0.99;
+	body->velocity.y *= 0.99;
 
 	dx = body->velocity.x * dt;
 	dy = body->velocity.y * dt;
@@ -171,12 +178,16 @@ void opus_body_set_density(opus_body *body, opus_real density)
 	opus_body_set_inertia(body, body->shape->get_inertia(body->shape, body->mass));
 }
 
+opus_real opus_body_get_area(opus_body *body)
+{
+	if (!body->shape) return 0;
+	return body->shape->get_area(body->shape);
+}
+
 void opus_body_set_shape(opus_body *body, opus_shape *shape)
 {
-	opus_polygon *poly;
-	poly        = (void *) shape;
 	body->shape = shape;
-	body->area  = polygon_area(poly->vertices, poly->n, 0);
+	body->area  = opus_body_get_area(body);
 	opus_body_set_mass(body, body->area * body->density);
 	opus_body_set_inertia(body, shape->get_inertia(shape, body->mass));
 	shape->update_bound(shape, body->rotation, body->position);
@@ -204,18 +215,12 @@ void opus_body_step_position(opus_body *body, opus_real dt)
 	}
 }
 
-void opus_body_step_velocity(opus_body *body, opus_vec2 gravity, int enable_damping,
-                             opus_real linear_velocity_damping,
-                             opus_real angular_velocity_damping, opus_real dt)
+void opus_body_step_velocity(opus_body *body, opus_vec2 gravity, opus_real dt)
 {
-	opus_real lvd = 1.0f;
-	opus_real avd = 1.0f;
+	opus_real lvd = 0.9f;
+	opus_real avd = 0.9f;
 	opus_vec2 at;
 
-	if (enable_damping) {
-		lvd = 1.0f / (1.0f + dt * linear_velocity_damping);
-		avd = 1.0f / (1.0f + dt * angular_velocity_damping);
-	}
 	switch (body->type) {
 		case OPUS_BODY_STATIC:
 			opus_vec2_set(&body->velocity, 0, 0);
@@ -235,15 +240,6 @@ void opus_body_step_velocity(opus_body *body, opus_vec2 gravity, int enable_damp
 
 			break;
 		case OPUS_BODY_KINEMATIC:
-			at = opus_vec2_scale(body->force, body->inv_mass * dt);
-
-			body->velocity = opus_vec2_add(body->velocity, at);
-			body->angular_velocity += body->inv_inertia * body->torque * dt;
-
-			body->velocity = opus_vec2_scale(body->velocity, lvd);
-			body->angular_velocity *= avd;
-
-			break;
 		default:
 			OPUS_ERROR("opus_body_step_velocity::no such body type or unsupported -- id:%d\n",
 			           body->id);

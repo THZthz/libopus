@@ -10,7 +10,7 @@ opus_lstm_unit *opus_lstm_unit_create(int length)
 {
 #define LSTM_ALLOC(_dst, _l)                           \
 	do {                                               \
-		mem = (double *) calloc((_l), sizeof(double)); \
+		mem = (double *) OPUS_CALLOC((_l), sizeof(double)); \
 		if (!mem) goto no_memory;                      \
 		(_dst) = mem;                                  \
 	} while (0)
@@ -22,7 +22,7 @@ opus_lstm_unit *opus_lstm_unit_create(int length)
 
 	OPUS_RETURN_IF(NULL, length < 1);
 
-	u = (opus_lstm_unit *) calloc(1, sizeof(opus_lstm_unit));
+	u = (opus_lstm_unit *) OPUS_CALLOC(1, sizeof(opus_lstm_unit));
 	OPUS_RETURN_IF(NULL, !u);
 
 	u->error_no  = 0;

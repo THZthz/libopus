@@ -20,11 +20,13 @@ extern "C" {
 
 #include "physics/opus/physics.h"
 
-
 typedef struct opus_contact  opus_contact;
 typedef struct opus_contacts opus_contacts;
 typedef struct opus_bvh      opus_bvh;
 typedef struct opus_bvh_leaf opus_bvh_leaf;
+
+typedef struct opus_overlap_result opus_overlap_result;
+typedef struct opus_clip_result    opus_clip_result;
 
 typedef void (*opus_sap_cb)(opus_body *A, opus_body *B, opus_mat2d ta, opus_mat2d tb, void *data);
 
@@ -78,6 +80,9 @@ struct opus_contacts {
 
 	opus_body     *A, *B;
 	opus_contact **contacts;
+
+	opus_real friction;
+	opus_real restitution;
 };
 
 struct opus_contact {
@@ -93,31 +98,31 @@ struct opus_contact {
 	opus_vec2  normal;
 	opus_vec2  tangent;
 	opus_real  depth;
-	opus_vec2  position_corrective_impulse;
-	opus_vec2  velocity_bias;
+	opus_vec2  restitution_bias;
 };
+
 
 /**
  * @brief max shape struct size, remember to call "opus_shape_get_max_struct_size_" to initialize
  */
 extern unsigned int OPUS_physics_shape_max_size;
 
-size_t opus_get_physics_id();
+size_t opus_get_physics_id(void);
 void   opus_recycle_physics_id(size_t id);
 
-void opus_shape_get_max_struct_size_();
+void opus_shape_get_max_struct_size_(void);
 
 opus_vec2 opus_shape_polygon_get_support(opus_shape *shape, opus_mat2d transform, opus_vec2 dir, size_t *index);
 opus_real opus_shape_polygon_get_inertia(opus_shape *shape, opus_real mass);
 void      opus_shape_polygon_update_bound(opus_shape *shape, opus_real rotation, opus_vec2 position);
+opus_real opus_shape_polygon_get_area(opus_shape *shape);
 opus_vec2 opus_shape_circle_get_support(opus_shape *shape, opus_mat2d transform, opus_vec2 dir, size_t *index);
 opus_real opus_shape_circle_get_inertia(opus_shape *shape, opus_real mass);
 void      opus_shape_circle_update_bound(opus_shape *shape, opus_real rotation, opus_vec2 position);
+opus_real opus_shape_circle_get_area(opus_shape *shape);
 
 void opus_body_step_position(opus_body *body, opus_real dt);
-void opus_body_step_velocity(opus_body *body, opus_vec2 gravity, int enable_damping,
-                             opus_real linear_velocity_damping,
-                             opus_real angular_velocity_damping, opus_real dt);
+void opus_body_step_velocity(opus_body *body, opus_vec2 gravity, opus_real dt);
 
 opus_contacts *opus_contacts_create(opus_body *A, opus_body *B);
 void           opus_contacts_destroy(opus_contacts *contacts);
@@ -125,7 +130,7 @@ opus_contact  *opus_contact_create(opus_body *A, opus_body *B, opus_vec2 pa, opu
 void           opus_contact_destroy(opus_contact *contact);
 char          *opus_contacts_id(opus_body *A, opus_body *B);
 
-opus_bvh      *opus_bvh_create();
+opus_bvh      *opus_bvh_create(void);
 void           opus_bvh_destroy(opus_bvh *bvh);
 void           opus_bvh_build_SAH(opus_bvh *bvh);
 void           opus_bvh_render(plutovg_t *pluto, opus_bvh *bvh);
@@ -139,6 +144,22 @@ opus_overlap_result opus_SAT(opus_shape *A, opus_shape *B, opus_mat2d transform_
 opus_clip_result    opus_VCLIP(opus_overlap_result overlap);
 void                opus_SAP(opus_body **bodies, size_t n, opus_sap_cb callback, void *data);
 
+void opus_joint_destroy(opus_joint *joint);
+void opus_constraint_destroy(opus_constraint *constraint);
+
+opus_joint_distance *opus_joint_distance_create(opus_body *body, opus_vec2 offset, opus_vec2 anchor, opus_real min_distance, opus_real max_distance);
+void                 opus_joint_distance_destroy(opus_joint_distance *joint);
+void                 opus_joint_distance_prepare(opus_joint *joint, opus_real dt);
+void                 opus_joint_distance_solve_velocity(opus_joint *joint, opus_real dt);
+
+opus_constraint_distance *opus_constraint_distance_create(opus_body *A, opus_body *B, opus_vec2 offset_a, opus_vec2 offset_b);
+void                      opus_constraint_distance_destroy(opus_constraint_distance *constraint);
+void                      opus_constraint_distance_prepare(opus_constraint *constraint, opus_real dt);
+void                      opus_constraint_distance_solve_velocity(opus_constraint *constraint, opus_real dt);
+
+opus_joint_revolute *opus_joint_revolute_create(opus_body *A, opus_body *B, opus_vec2 offset_a, opus_vec2 offset_b);
+void                 opus_joint_revolute_prepare(opus_joint *joint, opus_real dt);
+void                 opus_joint_revolute_solve_velocity(opus_joint *joint, opus_real dt);
 #ifdef __cplusplus
 };
 #endif /* __cplusplus */

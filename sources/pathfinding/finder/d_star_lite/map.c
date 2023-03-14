@@ -13,6 +13,7 @@
  */
 
 #include "pathfinding/finder/d_star_lite/map.h"
+#include "utils/utils.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -24,13 +25,13 @@ static void *deallocate_cells(map_t *map)
 	rows = map->rows;
 	for (y = 0; y < rows; y++)
 		if (map->cells[y]) {
-			free(map->cells[y]);
+			OPUS_FREE(map->cells[y]);
 			map->cells[y] = NULL;
 		} else {
 			break; /* following rows are not "malloc"ed */
 		}
 
-	free(map->cells);
+	OPUS_FREE(map->cells);
 	map->cells = NULL;
 
 	return NULL;
@@ -46,7 +47,7 @@ static void *deallocate_neighbors(map_t *map)
 		for (x = 0; x < cols; ++x) {
 			cell_t *cell = &(map->cells[y][x]);
 			if (cell->neighbors) {
-				free(cell->neighbors);
+				OPUS_FREE(cell->neighbors);
 				cell->neighbors = NULL;
 			} else {
 				break;

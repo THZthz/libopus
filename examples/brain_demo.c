@@ -23,18 +23,18 @@
 #include "math/math.h"
 #include "utils/utils.h"
 #include "vg/vg_color.h"
-#include "vg/vg_engine.h"
-#include "vg/vg_input.h"
+#include "engine/engine.h"
+#include "engine/input.h"
 #include "vg/vg_utils.h"
 #include "vg/vg_gl.h"
 #include "vg/pluto/plutovg-private.h"
 #include "vg/pluto/plutovg.h"
 
-vg_engine_t     *g_engine  = NULL;
-vg_input_t      *g_input   = NULL;
-vg_gl_program_t *g_program = NULL;
-vg_gl_font_t    *g_font    = NULL;
-vg_gl_program_t *g_pl_r    = NULL;
+opus_engine     *g_engine  = NULL;
+opus_input      *g_input   = NULL;
+opus_gl_program *g_program = NULL;
+opus_font       *g_font    = NULL;
+opus_gl_program *g_pl_r    = NULL;
 
 plutovg_surface_t *g_pl_s = NULL;
 plutovg_t         *g_pl   = NULL;
@@ -44,27 +44,27 @@ plutovg_t         *g_pl   = NULL;
 #define N 100
 
 
-void on_pointer_down(vg_input_t *input)
+void on_pointer_down(opus_input *input)
 {
 }
 
-void on_key_down(vg_input_t *input)
+void on_key_down(opus_input *input)
 {
 }
 
-void preload(vg_engine_t *engine)
+void preload(opus_engine *engine)
 {
 	g_pl_s = plutovg_surface_create(engine->width, engine->height);
 	g_pl   = plutovg_create(g_pl_s);
 	g_font = vg_gl_font_create("../assets/fonts/georgiaz.ttf");
 
 	/* handle glfw window input */
-	g_input = vg_input_init(g_engine);
-	vg_input_on(g_input->on_pointer_down, on_pointer_down);
-	vg_input_on(g_input->on_key_down, on_key_down);
+	g_input = opus_input_init(g_engine);
+	opus_input_on(g_input->on_pointer_down, on_pointer_down);
+	opus_input_on(g_input->on_key_down, on_key_down);
 }
 
-void update(vg_engine_t *engine, opus_real delta)
+void update(opus_engine *engine, opus_real delta)
 {
 }
 
@@ -78,7 +78,7 @@ double get_input(size_t i)
 	return sin(2.0 * 3.14 / N * 5.0 * (double) i);
 }
 
-void render(vg_engine_t *engine)
+void render(opus_engine *engine)
 {
 	static int     should_run_lstm = 1;
 	static opus_lstm_unit *u;
@@ -145,13 +145,13 @@ void render(vg_engine_t *engine)
 	}
 }
 
-void cleanup(vg_engine_t *engine)
+void cleanup(opus_engine *engine)
 {
 	plutovg_surface_destroy(g_pl_s);
 	plutovg_destroy(g_pl);
 	vg_gl_font_destroy(g_font);
 
-	vg_input_done();
+	opus_input_done();
 }
 
 void run_test(const char *name, void (*func)())
@@ -163,7 +163,7 @@ void run_test(const char *name, void (*func)())
 void create_engine()
 {
 	/* engine to create glfw window and a combined "vg_t" instance */
-	g_engine = vg_engine_create(800, 800, "vg");
+	g_engine = opus_engine_create(800, 800, "vg");
 
 	/* specially designed to draw [double, double, ...] like path(tessellate to triangle and draw with opengl) */
 	g_program = vg_gl_program_preset1();
@@ -171,7 +171,7 @@ void create_engine()
 	/* specially designed to render pluto_vg surface buffer */
 	g_pl_r = vg_gl_program_preset2();
 
-	vg_engine_set(g_engine, preload, update, render, cleanup);
+	opus_engine_set_callback(g_engine, preload, update, render, cleanup);
 }
 
 void destroy_engine()
@@ -179,7 +179,7 @@ void destroy_engine()
 	/* release resources */
 	vg_gl_program_destroy(g_program);
 	vg_gl_program_destroy(g_pl_r);
-	vg_engine_destroy(g_engine);
+	opus_engine_destroy(g_engine);
 }
 
 int main()
@@ -190,7 +190,7 @@ int main()
 
 	create_engine();
 
-	vg_engine_start(g_engine);
+	opus_engine_start(g_engine);
 	/*lstm_test();*/
 
 	/*run_test("xor", xor);

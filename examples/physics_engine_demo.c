@@ -1,6 +1,6 @@
 #include "vg/vg_color.h"
-#include "vg/vg_engine.h"
-#include "vg/vg_input.h"
+#include "engine/engine.h"
+#include "engine/input.h"
 #include "vg/vg_utils.h"
 #include "vg/vg_gl.h"
 #include "vg/pluto/plutovg-private.h"
@@ -11,10 +11,10 @@
 
 struct param {
 	/********************  VG_ENGINE  **************************/
-	vg_engine_t     *engine;
-	vg_input_t      *input;
-	vg_gl_program_t *program_gl, *program_pl;
-	vg_gl_font_t    *font_gl;
+	opus_engine     *engine;
+	opus_input      *input;
+	opus_gl_program *program_gl, *program_pl;
+	opus_font       *font_gl;
 	plutovg_t       *pl;
 
 	/******************  PHYSICS_ENGINE  *********************/
@@ -35,7 +35,7 @@ struct param {
 
 } g_param = {0};
 
-void on_pointer_down(vg_input_t *input)
+void on_pointer_down(opus_input *input)
 {
 	body_t **all_bodies = composite_all_bodies(g_param.phy_engine->world);
 	uint64_t i;
@@ -69,12 +69,12 @@ void on_pointer_down(vg_input_t *input)
 	g_param.selected_body = 0;
 }
 
-void on_pointer_move(vg_input_t *input)
+void on_pointer_move(opus_input *input)
 {
 	if (input->is_pointer_down) {}
 }
 
-void on_key_down(vg_input_t *input)
+void on_key_down(opus_input *input)
 {
 	if (input->keys_state[GLFW_KEY_Q]) {
 		body_set_angle(g_param.b1, g_param.b1->angle + 0.2);
@@ -85,13 +85,13 @@ void on_key_down(vg_input_t *input)
 	}
 }
 
-void on_scroll(vg_input_t *input)
+void on_scroll(opus_input *input)
 {
 	if (input->scroll_y > 0) { g_param.scale *= 1 + g_param.scale_delta; }
 	if (input->scroll_y < 0) { g_param.scale *= 1 - g_param.scale_delta; }
 }
 
-void preload(vg_engine_t *engine)
+void preload(opus_engine *engine)
 {
 	plutovg_surface_t *surface = plutovg_surface_create(engine->width, engine->height);
 	g_param.pl                 = plutovg_create(surface);
@@ -159,21 +159,21 @@ void preload(vg_engine_t *engine)
 	}
 }
 
-void update(vg_engine_t *engine, opus_real delta)
+void update(opus_engine *engine, opus_real delta)
 {
-	vg_input_t *input = g_param.input;
+	opus_input *input = g_param.input;
 	if (g_param.enable_physics) { physics_engine_update(g_param.phy_engine); }
 
 	if (g_param.bvh) {
 		size_t   i;
-		opus_real s          = vg_engine_get_time();
+		opus_real s          = opus_engine_get_time();
 		body_t **all_bodies = composite_all_bodies(g_param.phy_engine->world);
 		opus_bvh_destroy(g_param.bvh);
 		g_param.bvh = opus_bvh_create();
 		for (i = 0; i < opus_arr_len(all_bodies); i++) {
 			bvh_tree_insert(g_param.bvh, all_bodies[i], 0);
 		}
-		OPUS_INFO("%f\n", vg_engine_get_time() - s);
+		OPUS_INFO("%f\n", opus_engine_get_time() - s);
 	}
 
 	if (input->keys_state[GLFW_KEY_W])
@@ -201,7 +201,7 @@ static void draw_info()
 	        g_param.translation.x, g_param.translation.y, g_param.scale);
 
 	plutovg_set_font_size(g_param.pl, 18);
-	vg_pl_text_box(g_param.pl, text, -1, 400, 10, -1, -1, 0, 0, 1, 0);
+	opus_pl_text_box(g_param.pl, text, -1, 400, 10, -1, -1, 0, 0, 1, 0);
 	plutovg_set_source_rgb(g_param.pl, COLOR_BLACK);
 	plutovg_fill(g_param.pl);
 }
@@ -287,7 +287,7 @@ static void draw_body(body_t *body)
 	plutovg_fill(g_param.pl);*/
 }
 
-void render(vg_engine_t *engine)
+void render(opus_engine *engine)
 {
 	body_t       **all_bodies;
 	constraint_t **all_constraints;
@@ -322,7 +322,7 @@ void render(vg_engine_t *engine)
 		if (c->body_a) pa = opus_vec2_add(pa, c->body_a->position);
 		if (c->body_b) pb = opus_vec2_add(pb, c->body_b->position);
 
-		vg_pl_line(g_param.pl, pa.x, pa.y, pb.x, pb.y);
+		opus_pl_line(g_param.pl, pa.x, pa.y, pb.x, pb.y);
 		plutovg_set_source_rgb(g_param.pl, COLOR_BLACK);
 		plutovg_stroke(g_param.pl);
 	}
@@ -359,7 +359,7 @@ void render(vg_engine_t *engine)
 	g_param.program_pl->use(g_param.program_pl, g_param.pl->surface->data, s_width, s_height);
 }
 
-void cleanup(vg_engine_t *engine)
+void cleanup(opus_engine *engine)
 {
 	plutovg_destroy(g_param.pl);
 	vg_gl_font_destroy(g_param.font_gl);
@@ -400,10 +400,10 @@ int main()
 		g_param.enable_sleeping   = 0;
 
 		/* engine to create glfw window and a combined "vg_t" instance */
-		g_param.engine = vg_engine_create(800, 800, "vg");
+		g_param.engine = opus_engine_create(800, 800, "vg");
 
 		/* handle glfw window input */
-		g_param.input = vg_input_init(g_param.engine);
+		g_param.input = opus_input_init(g_param.engine);
 
 		/* specially designed to draw [double, double, ...] like path(tessellate to triangle and
 		 * draw with opengl) */
@@ -412,18 +412,18 @@ int main()
 		/* specially designed to render pluto_vg surface buffer */
 		g_param.program_pl = vg_gl_program_preset2();
 
-		vg_engine_set(g_param.engine, preload, update, render, cleanup);
-		vg_input_on(g_param.input->on_pointer_down, on_pointer_down);
-		vg_input_on(g_param.input->on_key_down, on_key_down);
-		vg_input_on(g_param.input->on_scroll, on_scroll);
-		vg_input_on(g_param.input->on_pointer_move, on_pointer_move /* start engine main loop */);
-		vg_engine_start(g_param.engine);
+		opus_engine_set_callback(g_param.engine, preload, update, render, cleanup);
+		opus_input_on(g_param.input->on_pointer_down, on_pointer_down);
+		opus_input_on(g_param.input->on_key_down, on_key_down);
+		opus_input_on(g_param.input->on_scroll, on_scroll);
+		opus_input_on(g_param.input->on_pointer_move, on_pointer_move /* start engine main loop */);
+		opus_engine_start(g_param.engine);
 
 		/* release resources */
 		vg_gl_program_destroy(g_param.program_gl);
 		vg_gl_program_destroy(g_param.program_pl);
-		vg_engine_destroy(g_param.engine);
-		vg_input_done();
+		opus_engine_destroy(g_param.engine);
+		opus_input_done();
 	} else {
 		int i, j;
 

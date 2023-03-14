@@ -1,4 +1,5 @@
 #include "data_structure/trie.h"
+#include "utils/utils.h"
 
 #include <stddef.h>
 #include <stdlib.h>
@@ -35,13 +36,13 @@ static /* inline */ int trie_stack_init(struct trie_stack *s)
 {
 	s->size  = 256;
 	s->fill  = 0;
-	s->stack = malloc(s->size * sizeof(struct trie_stack_node));
+	s->stack = OPUS_MALLOC(s->size * sizeof(struct trie_stack_node));
 	return !s->stack ? ETRIEFAIL : ETRIEOK;
 }
 
 static /* inline */ void trie_stack_free(struct trie_stack *s)
 {
-	free(s->stack);
+	OPUS_FREE(s->stack);
 	s->stack = NULL;
 }
 
@@ -49,7 +50,7 @@ static /* inline */ int trie_stack_grow(struct trie_stack *s)
 {
 	size_t new_size = s->size * 2 * sizeof(struct trie_stack_node);
 
-	struct trie_stack_node *resize = realloc(s->stack, new_size);
+	struct trie_stack_node *resize = OPUS_REALLOC(s->stack, new_size);
 	if (!resize) {
 		trie_stack_free(s);
 		return ETRIEFAIL;
@@ -87,13 +88,13 @@ static /* inline */ struct trie_stack_node *trie_stack_peek(struct trie_stack *s
 
 /**
  * @brief allocate a trie tree on heap and return its pointer
- * @return pointer to a trie on heap, NULL if `malloc` fails
+ * @return pointer to a trie on heap, NULL if `OPUS_MALLOC` fails
  */
 trie_t *trie_create(void)
 {
 	/* Root never needs to be resized. */
 	size_t  tail_size = sizeof(struct trie_ptr) * 255;
-	trie_t *root      = (trie_t *) malloc(sizeof(*root) + tail_size);
+	trie_t *root      = (trie_t *) OPUS_MALLOC(sizeof(*root) + tail_size);
 	if (!root)
 		return NULL;
 	root->size       = 255;
@@ -103,26 +104,27 @@ trie_t *trie_create(void)
 }
 
 /**
- * destroy a trie, note that it will not free any resources of the data you insert
+ * destroy a trie, note that it will not OPUS_FREE any resources of the data you insert
  * @param trie
  * @return 0 (ETRIEOK) if success, 1 (does not mean anything) otherwise
  */
 int trie_destroy(trie_t *trie)
 {
-	struct trie_stack stack, *s = &stack;
+	struct trie_stack       stack, *s = &stack;
+	struct trie_stack_node *node;
 	if (trie_stack_init(s) != ETRIEOK)
 		return 1;
 	trie_stack_push(s, trie); /* first push always successful */
 	while (s->fill > 0) {
-		struct trie_stack_node *node = trie_stack_peek(s);
+		node = trie_stack_peek(s);
 		/* check if all the children of current trie is correctly freed */
 		if (node->i < node->trie->n_children) {
-			int i = node->i++; /* update the index of the next trie to free in current trie */
+			int i = node->i++; /* update the index of the next trie to OPUS_FREE in current trie */
 			/* push its children first and deal with it */
 			if (trie_stack_push(s, get_child(node->trie)[i].trie) != ETRIEOK)
 				return 1;
 		} else {
-			free(trie_stack_pop(s)); /* free current trie */
+			OPUS_FREE_R(trie_stack_pop(s)); /* free current trie */
 		}
 	}
 	trie_stack_free(s);
@@ -188,7 +190,7 @@ static trie_t *__trie_grow(trie_t *self)
 	if (size > 255)
 		size = 255;
 	children_size = sizeof(struct trie_ptr) * size;
-	resized       = realloc(self, sizeof(*self) + children_size);
+	resized       = OPUS_REALLOC(self, sizeof(*self) + children_size);
 	if (!resized)
 		return NULL;
 	resized->size = (short) size;
@@ -224,7 +226,7 @@ static void __trie_node_remove(trie_t *self, int i)
 static trie_t *__trie_create(void)
 {
 	int     size = 1;
-	trie_t *trie = malloc(sizeof(*trie) + sizeof(struct trie_ptr) * size);
+	trie_t *trie = OPUS_MALLOC(sizeof(*trie) + sizeof(struct trie_ptr) * size);
 	if (!trie)
 		return 0;
 	trie->size       = (short) size;
@@ -259,7 +261,7 @@ int trie_replace(trie_t *self, const char *key, trie_replacer f, void *arg)
 			return 1;
 		added = __trie_node_add(last, ukey[depth], sub_trie);
 		if (!added) {
-			free(sub_trie);
+			OPUS_FREE(sub_trie);
 			return 1;
 		}
 		if (parent) {
@@ -293,7 +295,7 @@ static int __trie_buffer_init(struct __trie_buffer *b, const char *prefix)
 {
 	b->fill   = strlen(prefix);
 	b->size   = b->fill >= 256 ? b->fill * 2 : 256;
-	b->buffer = malloc(b->size);
+	b->buffer = OPUS_MALLOC(b->size);
 	if (b->buffer)
 		memcpy(b->buffer, prefix, b->fill + 1);
 	return !b->buffer ? ETRIEFAIL : ETRIEOK;
@@ -301,13 +303,13 @@ static int __trie_buffer_init(struct __trie_buffer *b, const char *prefix)
 
 static void __trie_buffer_free(struct __trie_buffer *b)
 {
-	free(b->buffer);
+	OPUS_FREE(b->buffer);
 	b->buffer = NULL;
 }
 
 static int __trie_buffer_grow(struct __trie_buffer *b)
 {
-	char *resize = realloc(b->buffer, b->size * 2);
+	char *resize = OPUS_REALLOC(b->buffer, b->size * 2);
 	if (!resize) {
 		__trie_buffer_free(b);
 		return -1;
@@ -444,7 +446,7 @@ int trie_prune(trie_t *trie)
 				trie_t *child = get_child(t)[i].trie;
 				if (!child->n_children && !child->data) {
 					__trie_node_remove(t, i--);
-					free(child);
+					OPUS_FREE(child);
 				}
 			}
 		}
@@ -504,16 +506,16 @@ struct trie_it {
  */
 trie_it_t *trie_it_create(trie_t *trie, const char *prefix)
 {
-	trie_it_t *it = malloc(sizeof(*it));
+	trie_it_t *it = OPUS_MALLOC(sizeof(*it));
 	if (!it)
 		return 0;
 	if (trie_stack_init(&it->stack)) {
-		free(it);
+		OPUS_FREE(it);
 		return 0;
 	}
 	if (__trie_buffer_init(&it->buffer, prefix)) {
 		trie_stack_free(&it->stack);
-		free(it);
+		OPUS_FREE(it);
 		return 0;
 	}
 	trie_stack_push(&it->stack, trie); /* first push always successful */
@@ -610,7 +612,7 @@ void trie_it_destroy(trie_it_t *it)
 {
 	__trie_buffer_free(&it->buffer);
 	trie_stack_free(&it->stack);
-	free(it);
+	OPUS_FREE(it);
 }
 
 
@@ -647,7 +649,7 @@ static char *generate(uint64_t *s)
 	int   min = 8;
 	int   max = 300;
 	int   len = min + pcg32(s) % (max - min);
-	char *key = malloc(len + 1);
+	char *key = OPUS_MALLOC(len + 1);
 	if (!key)
 		die("out of memory");
 	for (int i = 0; i < len; i++)
@@ -659,7 +661,7 @@ static char *generate(uint64_t *s)
 static void *replacer(const char *key, void *value, void *arg)
 {
 	(void) key;
-	free(value);
+	OPUS_FREE(value);
 	return arg;
 }
 
@@ -711,7 +713,7 @@ int main(void)
 				die("FAIL: missing key");
 			if (strcmp(r, key))
 				die("FAIL: value mismatch");
-			free(key);
+			OPUS_FREE(key);
 		}
 		UTILS_END_BENCHMARK(check_key_is_present);
 
@@ -744,7 +746,7 @@ int main(void)
 			char *key = generate(&rngcopy);
 			if (trie_replace(t, key, replacer, NULL))
 				die("out of memory");
-			free(key);
+			OPUS_FREE(key);
 		}
 		UTILS_END_BENCHMARK(remove_all_entries);
 
@@ -756,7 +758,7 @@ int main(void)
 			char *r   = trie_search(t, key);
 			if (r)
 				die("FAIL: key not removed");
-			free(key);
+			OPUS_FREE(key);
 		}
 		UTILS_END_BENCHMARK(check_key_gone);
 

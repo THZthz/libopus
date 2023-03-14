@@ -16,6 +16,7 @@
 #include <string.h>
 
 #include "pathfinding/graph.h"
+#include "utils/utils.h"
 
 typedef struct context_f context_t;
 typedef struct arc         arc_t;
@@ -37,7 +38,7 @@ struct context_f {
 static graph_status_t create_context(graph_t *graph, void **args)
 {
 	if (graph->context_ == NULL) {
-		context_t *context   = (context_t *) malloc(sizeof(context_t));
+		context_t *context   = (context_t *) OPUS_MALLOC(sizeof(context_t));
 		int        is_static = *(int *) args[0];
 
 		if (!is_static) return GRAPH_FAIL;
@@ -49,16 +50,16 @@ static graph_status_t create_context(graph_t *graph, void **args)
 			context->max_head   = *(graph_count_t *) args[1];
 			context->max_arc    = *(graph_count_t *) args[2];
 
-			context->heads       = (graph_id_t *) malloc(context->max_head * sizeof(graph_id_t));
+			context->heads       = (graph_id_t *) OPUS_MALLOC(context->max_head * sizeof(graph_id_t));
 			context->arcs        = (arc_t *) malloc(context->max_arc * sizeof(arc_t));
 			context->vertex_data = (void **) malloc(context->max_head * sizeof(void *));
 
 			/* if we fail to allocate any memory, clean and exit */
 			if (!context->heads || !context->arcs || !context->vertex_data) {
-				if (context->heads) free(context->heads);
-				if (context->arcs) free(context->arcs);
-				if (context->vertex_data) free(context->vertex_data);
-				free(context);
+				if (context->heads) OPUS_FREE(context->heads);
+				if (context->arcs) OPUS_FREE(context->arcs);
+				if (context->vertex_data) OPUS_FREE(context->vertex_data);
+				OPUS_FREE(context);
 				graph->context_ = NULL;
 				return GRAPH_NO_MEM;
 			}
@@ -79,10 +80,10 @@ static graph_status_t destroy_context(graph_t *graph)
 	context_t *context = graph->context_;
 	if (context) {
 		graph->context_ = NULL;
-		free(context->vertex_data);
-		free(context->heads);
-		free(context->arcs);
-		free(context);
+		OPUS_FREE(context->vertex_data);
+		OPUS_FREE(context->heads);
+		OPUS_FREE(context->arcs);
+		OPUS_FREE(context);
 	}
 	return GRAPH_OK;
 }
@@ -172,7 +173,7 @@ static graph_status_t get_neighbors_array_by_id(graph_t *graph, graph_id_t id, g
 	while (next != GRAPH_MAX_ID) {
 		arc_t *arc = &context->arcs[next];
 		if (*res_count >= cap) {
-			*res_neighbors = (graph_id_t *) realloc(*res_neighbors, cap * 2 * sizeof(graph_id_t));
+			*res_neighbors = (graph_id_t *) OPUS_REALLOC(*res_neighbors, cap * 2 * sizeof(graph_id_t));
 			cap *= 2;
 			if (*res_neighbors == NULL) return GRAPH_NO_MEM;
 		}
@@ -270,7 +271,7 @@ graph_t *graph_forward_star_create(int is_static, ...)
 
 		/* create context */
 		if (graph->create_context_(graph, args)) {
-			free(graph);
+			OPUS_FREE(graph);
 			return NULL;
 		}
 	}

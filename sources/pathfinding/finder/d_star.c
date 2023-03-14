@@ -177,7 +177,7 @@ static graph_weight_t process_state(context_t *context)
 			}
 		}
 	}
-	if (neighbors) free(neighbors);
+	if (neighbors) OPUS_FREE(neighbors);
 
 	cur = get_min_state(context);
 	if (cur == GRAPH_MAX_ID) return -1;
@@ -204,7 +204,7 @@ static graph_status_t create_context(pathfinder_t *finder, void **args)
 	if (!finder->graph_) return GRAPH_FAIL;
 
 	if (OPUS_LIKELY(!context)) {
-		context = (context_t *) malloc(sizeof(context_t));
+		context = (context_t *) OPUS_MALLOC(sizeof(context_t));
 
 		if (OPUS_UNLIKELY(!context)) return GRAPH_NO_MEM;
 
@@ -214,23 +214,23 @@ static graph_status_t create_context(pathfinder_t *finder, void **args)
 		context->from         = GRAPH_MAX_ID;
 		context->to           = GRAPH_MAX_ID;
 		context->n_nodes_     = finder->graph_->get_vertex_count(finder->graph_);
-		context->nodes_       = (d_star_node_t *) malloc(sizeof(d_star_node_t) * context->n_nodes_);
+		context->nodes_       = (d_star_node_t *) OPUS_MALLOC(sizeof(d_star_node_t) * context->n_nodes_);
 
 		if (!context->nodes_) {
 			finder->context_ = NULL;
-			free(context);
+			OPUS_FREE(context);
 			return GRAPH_NO_MEM;
 		}
 
 		/* initialize nodes' state */
 		memset(context->nodes_, 0, context->n_nodes_ * sizeof(d_star_node_t));
 
-		context->open_heap_data_ = (graph_id_t *) malloc(sizeof(graph_id_t));
+		context->open_heap_data_ = (graph_id_t *) OPUS_MALLOC(sizeof(graph_id_t));
 
 		if (!context->open_heap_data_) {
 			finder->context_ = NULL;
-			free(context->nodes_);
-			free(context);
+			OPUS_FREE(context->nodes_);
+			OPUS_FREE(context);
 			return GRAPH_NO_MEM;
 		}
 
@@ -250,7 +250,7 @@ static graph_status_t destroy_context(pathfinder_t *finder)
 	if (finder && finder->context_) {
 		context_t *context = finder->context_;
 
-		free(context);
+		OPUS_FREE(context);
 	}
 
 	return GRAPH_OK;
@@ -310,7 +310,7 @@ static graph_status_t get_path(pathfinder_t *finder, graph_id_t **res_path, grap
 	graph_count_t capacity = 10;
 	context_t    *context  = finder->context_;
 
-	*res_path  = (graph_id_t *) malloc(capacity * sizeof(graph_id_t));
+	*res_path  = (graph_id_t *) OPUS_MALLOC(capacity * sizeof(graph_id_t));
 	*res_count = 0;
 
 	if (OPUS_UNLIKELY(!(*res_path))) {
@@ -329,7 +329,7 @@ static graph_status_t get_path(pathfinder_t *finder, graph_id_t **res_path, grap
 
 		if (*res_count == capacity) {
 			capacity *= 2;
-			*res_path = (graph_id_t *) realloc(*res_path, capacity * sizeof(graph_id_t));
+			*res_path = (graph_id_t *) OPUS_REALLOC(*res_path, capacity * sizeof(graph_id_t));
 			if (!(*res_path)) return GRAPH_NO_MEM;
 		}
 		(*res_path)[(*res_count)++] = p_id;
@@ -349,7 +349,7 @@ pathfinder_t *pathfinder_d_star_create(graph_t *graph)
 	        destroy_context,
 	        search,
 	        get_path};
-	pathfinder_t *finder = (pathfinder_t *) malloc(sizeof(pathfinder_t));
+	pathfinder_t *finder = (pathfinder_t *) OPUS_MALLOC(sizeof(pathfinder_t));
 
 	if (!finder) return NULL;
 
@@ -358,7 +358,7 @@ pathfinder_t *pathfinder_d_star_create(graph_t *graph)
 	finder->graph_   = graph;
 
 	if (finder->create_context_(finder, NULL)) {
-		free(finder);
+		OPUS_FREE(finder);
 		return NULL;
 	}
 

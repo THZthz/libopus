@@ -17,6 +17,7 @@
 #include <stdlib.h>
 
 #include "pathfinding/graph.h"
+#include "utils/utils.h"
 
 #define TILE_(data, x, y, w) ((char *) (data) + (y) * (w) + (x))
 
@@ -55,7 +56,7 @@ static graph_status_t create_context(graph_t *graph, void **args)
 		return GRAPH_OK;
 	}
 
-	context = (context_t *) malloc(sizeof(context_t));
+	context = OPUS_MALLOC(sizeof(context_t));
 	if (context) {
 		graph->context_  = context;
 		context->x       = x;
@@ -70,9 +71,9 @@ static graph_status_t create_context(graph_t *graph, void **args)
 
 		/* TODO: we need more accurate weights ? */
 		/*if (mode_01) {*/
-		context->weights = (char *) malloc(count_w * count_h * sizeof(char));
+		context->weights = (char *) OPUS_MALLOC(count_w * count_h * sizeof(char));
 		/*} else {
-		    context->weights = (graph_weight_t *) malloc(count_w * count_h * sizeof(graph_weight_t));
+		    context->weights = (graph_weight_t *) OPUS_MALLOC(count_w * count_h * sizeof(graph_weight_t));
 		}*/
 
 		if (!context->weights) {
@@ -184,7 +185,7 @@ static graph_status_t get_neighbors(graph_t *graph, graph_vertex_t *vertex, grap
 static graph_status_t get_neighbors_array_by_id(graph_t *graph, graph_id_t id, graph_id_t **res_neighbors, graph_count_t *res_count)
 {
 	context_t *context = graph->context_;
-	*res_neighbors     = (graph_id_t *) malloc(sizeof(graph_id_t) * (context->allow_diagonal_ ? 8 : 4));
+	*res_neighbors     = (graph_id_t *) OPUS_MALLOC(sizeof(graph_id_t) * (context->allow_diagonal_ ? 8 : 4));
 	return get_neighbors_by_id(graph, id, *res_neighbors, res_count);
 }
 
@@ -226,7 +227,7 @@ graph_t *graph_grid_create(int mode_01, int allow_diagonal, double x, double y, 
 	        get_estimated_cost, get_estimated_cost_by_id};
 	graph_t *graph;
 
-	graph = (graph_t *) malloc(sizeof(graph_t));
+	graph = (graph_t *) OPUS_MALLOC(sizeof(graph_t));
 	if (graph) {
 		void *args[8];
 		args[0] = &mode_01;

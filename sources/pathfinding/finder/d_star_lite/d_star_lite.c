@@ -31,7 +31,7 @@ struct context {
 
 	map_t     map;
 	cell_t  **path; /* array */
-	heap_t    open_heap;
+	opus_heap    open_heap;
 	unsigned *open_heap_data_;
 	cell_t   *start;
 	cell_t   *goal;
@@ -71,7 +71,7 @@ static void heap_insert_(context_t *context, cell_t *cell, double k1, double k2)
 	cell->priority.k2 = k2;
 	cell->is_open     = 1;
 
-	heap_push2(&context->open_heap, &id);
+	opus_heap_insert(&context->open_heap, &id);
 }
 
 /* remove cell from open heap */
@@ -445,14 +445,14 @@ static graph_status_t create_context(pathfinder_t *finder, void **args)
 		rows = *(unsigned *) args[0];
 		cols = *(unsigned *) args[1];
 
-		context = (context_t *) malloc(sizeof(context_t));
+		context = (context_t *) OPUS_MALLOC(sizeof(context_t));
 		if (!context) return GRAPH_NO_MEM;
 
 		finder->context_ = context;
 
 		/* initialize map */
 		if (!map_init(&context->map, rows, cols)) {
-			free(context);
+			OPUS_FREE(context);
 			return GRAPH_NO_MEM;
 		}
 
@@ -486,7 +486,7 @@ static graph_status_t destroy_context(pathfinder_t *finder)
 
 		map_done(&context->map);
 
-		free(context);
+		OPUS_FREE(context);
 	}
 
 	return GRAPH_OK;
@@ -533,7 +533,7 @@ static graph_status_t get_path(pathfinder_t *finder, graph_id_t **res_path, grap
 	unsigned i;
 	context    = finder->context_;
 	*res_count = 0;
-	*res_path  = (graph_id_t *) malloc(sizeof(graph_id_t) * opus_arr_len(context->path));
+	*res_path  = (graph_id_t *) OPUS_MALLOC(sizeof(graph_id_t) * opus_arr_len(context->path));
 	if (!(*res_path)) return GRAPH_NO_MEM;
 	*res_count = opus_arr_len(context->path);
 	for (i = 0; i < opus_arr_len(context->path); i++) (*res_path)[i] = get_cell_id(context, context->path[i]);
@@ -549,7 +549,7 @@ pathfinder_t *pathfinder_d_star_lite_create(graph_t *graph, unsigned rows, unsig
 	        destroy_context,
 	        search,
 	        get_path};
-	pathfinder_t *finder = (pathfinder_t *) malloc(sizeof(pathfinder_t));
+	pathfinder_t *finder = (pathfinder_t *) OPUS_MALLOC(sizeof(pathfinder_t));
 
 	void *args[2];
 
@@ -563,7 +563,7 @@ pathfinder_t *pathfinder_d_star_lite_create(graph_t *graph, unsigned rows, unsig
 	args[1] = &cols;
 
 	if (finder->create_context_(finder, args)) {
-		free(finder);
+		OPUS_FREE(finder);
 		return NULL;
 	}
 

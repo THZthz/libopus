@@ -13,7 +13,12 @@
 #include "vg/vg_color.h"
 #include "external/sokol_time.h"
 #include "utils/utils.h"
-#include "vg/vg_engine.h"
+#include "engine.h"
+
+#ifdef __EMSCRIPTEN__
+#include "external/emscripten/emscripten.h"
+//#include "external/emscripten/emscripten/html5.h"
+#endif /* __EMSCRIPTEN__ */
 
 /* glfw: whenever the window size changed (by OS or user resize) this callback function executes */
 void framebuffer_size_(GLFWwindow* window, int width, int height)
@@ -23,7 +28,7 @@ void framebuffer_size_(GLFWwindow* window, int width, int height)
 	glViewport(0, 0, width, height);
 }
 
-static void create_glfw_window_(vg_engine_t *engine)
+static void create_glfw_window_(opus_engine *engine)
 {
 	GLFWwindow *window;
 
@@ -58,7 +63,7 @@ static void create_glfw_window_(vg_engine_t *engine)
 	glfwSetTime(0);
 }
 
-static void init_glfw_(vg_engine_t *engine)
+static void init_glfw_(opus_engine *engine)
 {
 	int major, minor, revision;
 
@@ -75,11 +80,11 @@ static void init_glfw_(vg_engine_t *engine)
 	OPUS_INFO("engine initialized with GLFW %i.%i.%i\n", major, minor, revision);
 }
 
-vg_engine_t *vg_engine_create(int width, int height, const char *title)
+opus_engine *opus_engine_create(int width, int height, const char *title)
 {
-	vg_engine_t *engine;
+	opus_engine *engine;
 
-	engine = (vg_engine_t *) malloc(sizeof(vg_engine_t));
+	engine = (opus_engine *) malloc(sizeof(opus_engine));
 	OPUS_RETURN_IF(NULL, !engine);
 	engine->vg = opus_vg_create();
 	if (!engine->vg) {
@@ -111,7 +116,7 @@ vg_engine_t *vg_engine_create(int width, int height, const char *title)
 	return engine;
 }
 
-void vg_engine_destroy(vg_engine_t *engine)
+void opus_engine_destroy(opus_engine *engine)
 {
 	OPUS_RETURN_IF(, !engine);
 	free(engine->title);
@@ -119,11 +124,11 @@ void vg_engine_destroy(vg_engine_t *engine)
 	free(engine);
 }
 
-void vg_engine_set(vg_engine_t *engine,
-                   vg_engine_preload_cb preload,
-                   vg_engine_update_cb update,
-                   vg_engine_render_cb render,
-                   vg_engine_cleanup_cb cleanup)
+void opus_engine_set_callback(opus_engine         *engine,
+                   opus_engine_preload_cb preload,
+                   opus_engine_update_cb  update,
+                   opus_engine_render_cb  render,
+                   opus_engine_cleanup_cb cleanup)
 {
 	engine->preload_ = preload;
 	engine->update_ = update;
@@ -131,12 +136,7 @@ void vg_engine_set(vg_engine_t *engine,
 	engine->cleanup_ = cleanup;
 }
 
-void vg_engine_stop(vg_engine_t *engine)
-{
-	engine->is_running = 0;
-}
-
-void iter(vg_engine_t *engine)
+void iter(opus_engine *engine)
 {
 	static float avg_duration = 0.f;
 	static float alpha        = 1.f / 100.f; /* sampling_count=100 */
@@ -147,7 +147,7 @@ void iter(vg_engine_t *engine)
 
 	glViewport(0, 0, engine->width, engine->height);
 
-	engine->current_time = vg_engine_get_time();
+	engine->current_time = opus_engine_get_time();
 	engine->frame_count++;
 	engine->elapsed_time = engine->current_time - engine->last_time;
 
@@ -156,7 +156,7 @@ void iter(vg_engine_t *engine)
 		avg_duration = (float) engine->elapsed_time;
 	else
 		avg_duration = avg_duration * (1 - alpha) + (float) engine->elapsed_time * alpha;
-	engine->fps = 1. / avg_duration;
+	engine->fps = 1. / avg_duration * 1000;
 
 	if (engine->update_) engine->update_(engine, engine->elapsed_time);
 	if (engine->render_) engine->render_(engine);
@@ -169,12 +169,31 @@ void iter(vg_engine_t *engine)
 	engine->last_time = engine->current_time;
 }
 
-opus_real vg_engine_get_time()
+/**
+ * @brief give the internal loop of engine's logic a signal to stop(will not immediately take effect)
+ * @param engine
+ */
+void opus_engine_stop(opus_engine *engine)
+{
+	engine->is_running = 0;
+#ifdef __EMSCRIPTEN__
+	emscripten_cancel_main_loop(iter);
+#endif /* __EMSCRIPTEN__ */
+}
+
+void opus_engine_end(opus_engine *engine)
+{
+	/* cleanup resources and exit */
+	if (engine->cleanup_) engine->cleanup_(engine);
+	OPUS_INFO("engine preformed a cleanup and terminated\n");
+}
+
+opus_real opus_engine_get_time(void)
 {
 	return stm_ms(stm_now());
 }
 
-void vg_engine_start(vg_engine_t *engine)
+void opus_engine_start(opus_engine *engine)
 {
 	OPUS_INFO("engine is now running\n");
 
@@ -183,22 +202,21 @@ void vg_engine_start(vg_engine_t *engine)
 
 	glfwMakeContextCurrent(engine->window);
 
-
 	/* load resources and prepare to enter the main loop */
 	if (engine->preload_) engine->preload_(engine);
 
 	engine->is_running   = 1;
 	engine->frame_count  = 0;
-	engine->last_time    = vg_engine_get_time();
+	engine->last_time    = opus_engine_get_time();
 	engine->start_time   = engine->last_time;
 	engine->elapsed_time = 0.0;
 	engine->fps          = 0.0;
+#ifdef __EMSCRIPTEN__
+	emscripten_set_main_loop_arg((em_arg_callback_func) iter, engine, 0, 1);
+#else
 	while (!glfwWindowShouldClose(engine->window) && engine->is_running)
 		iter(engine);
-
-	/* cleanup resources and exit */
-	if (engine->cleanup_) engine->cleanup_(engine);
-	OPUS_INFO("engine preformed a cleanup and terminated\n");
+#endif
 }
 
 

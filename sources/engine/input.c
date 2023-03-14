@@ -1,5 +1,5 @@
 /**
- * @file vg_input.c
+ * @file input.c
  *     Author:    _              _
  *               / \   _ __ ___ (_)  __ _ ___
  *              / _ \ | '_ ` _ \| |/ _` / __|
@@ -13,11 +13,11 @@
  */
 
 #include "utils/utils.h"
-#include "vg/vg_input.h"
+#include "input.h"
 
-static vg_input_t input;
+static opus_input input;
 
-void vg_input_emit(vg_input_cb *callback)
+void opus_input_emit(opus_input_cb *callback)
 {
 	size_t i, n ;
 	if (!callback) return;
@@ -26,7 +26,7 @@ void vg_input_emit(vg_input_cb *callback)
 	}
 }
 
-void vg_input_on(vg_input_cb *callback, vg_input_cb cb)
+void opus_input_on(opus_input_cb *callback, opus_input_cb cb)
 {
 	if (!callback) return;
 	opus_arr_push(callback, &cb);
@@ -35,9 +35,9 @@ void vg_input_on(vg_input_cb *callback, vg_input_cb cb)
 static void cursor_position_(GLFWwindow *window, double x_pos, double y_pos)
 {
 	opus_vec2_set(&input.pointer, x_pos, y_pos);
-	vg_input_emit(input.on_pointer_move);
+	opus_input_emit(input.on_pointer_move);
 	if (input.is_pointer_down) {
-		vg_input_emit(input.on_drag);
+		opus_input_emit(input.on_drag);
 	}
 }
 
@@ -47,11 +47,11 @@ static void key_(GLFWwindow *window, int key, int scancode, int action, int mods
 	if (action == GLFW_PRESS) {
 		input.keys_state[key] = 1;
 		input.key_pressed++;
-		vg_input_emit(input.on_key_down);
+		opus_input_emit(input.on_key_down);
 	} else if (action == GLFW_RELEASE) {
 		input.keys_state[key] = 0;
 		input.key_pressed--;
-		vg_input_emit(input.on_key_up);
+		opus_input_emit(input.on_key_up);
 	}
 
 	input.ctrl_key  = (key == GLFW_KEY_LEFT_CONTROL || key == GLFW_KEY_RIGHT_CONTROL);
@@ -77,9 +77,9 @@ static void mouse_button_(GLFWwindow *window, int button, int action, int mods)
 	input.mouse_middle = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE);
 	input.mouse_right  = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT);
 	if (action == GLFW_PRESS) {
-		vg_input_emit(input.on_pointer_down);
+		opus_input_emit(input.on_pointer_down);
 	} else if (action == GLFW_RELEASE) {
-		vg_input_emit(input.on_pointer_up);
+		opus_input_emit(input.on_pointer_up);
 	}
 }
 
@@ -87,16 +87,16 @@ static void scroll_(GLFWwindow *window, double x_offset, double y_offset)
 {
 	input.scroll_x = x_offset;
 	input.scroll_y = y_offset;
-	vg_input_emit(input.on_scroll);
+	opus_input_emit(input.on_scroll);
 }
 
-vg_input_t *vg_input_init(vg_engine_t *engine)
+opus_input *opus_input_init(opus_engine *engine)
 {
 	OPUS_RETURN_IF(NULL, !engine);
 
 	input.engine = engine;
 
-	memset(input.keys_state, 0, sizeof(char) * VG_ENGINE_KEYS_SIZE);
+	memset(input.keys_state, 0, sizeof(char) * OPUS_ENGINE_KEYS_SIZE);
 	input.key_pressed     = 0;
 	input.mouse_left      = 0;
 	input.mouse_middle    = 0;
@@ -108,19 +108,19 @@ vg_input_t *vg_input_init(vg_engine_t *engine)
 	glfwSetCursorPosCallback(engine->window, cursor_position_);
 	glfwSetScrollCallback(engine->window, scroll_);
 
-	opus_arr_create(input.on_pointer_down, sizeof(vg_input_cb));
-	opus_arr_create(input.on_pointer_move, sizeof(vg_input_cb));
-	opus_arr_create(input.on_pointer_up, sizeof(vg_input_cb));
-	opus_arr_create(input.on_drag, sizeof(vg_input_cb));
-	opus_arr_create(input.on_scroll, sizeof(vg_input_cb));
-	opus_arr_create(input.on_key_press, sizeof(vg_input_cb));
-	opus_arr_create(input.on_key_down, sizeof(vg_input_cb));
-	opus_arr_create(input.on_key_up, sizeof(vg_input_cb));
+	opus_arr_create(input.on_pointer_down, sizeof(opus_input_cb));
+	opus_arr_create(input.on_pointer_move, sizeof(opus_input_cb));
+	opus_arr_create(input.on_pointer_up, sizeof(opus_input_cb));
+	opus_arr_create(input.on_drag, sizeof(opus_input_cb));
+	opus_arr_create(input.on_scroll, sizeof(opus_input_cb));
+	opus_arr_create(input.on_key_press, sizeof(opus_input_cb));
+	opus_arr_create(input.on_key_down, sizeof(opus_input_cb));
+	opus_arr_create(input.on_key_up, sizeof(opus_input_cb));
 
 	return &input;
 }
 
-void vg_input_done()
+void opus_input_done(void)
 {
 	opus_arr_destroy(input.on_pointer_down);
 	opus_arr_destroy(input.on_pointer_move);

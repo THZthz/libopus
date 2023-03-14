@@ -30,9 +30,9 @@ void opus_delaunay_init(opus_delaunay_data *data, opus_real *coords, uint32_t n)
 #define ALLOC__(type, dst, ele_count)                                    \
 	do {                                                                 \
 		if ((dst) == NULL)                                               \
-			(dst) = (type *) malloc((ele_count) * sizeof(type));         \
+			(dst) = (type *) OPUS_MALLOC((ele_count) * sizeof(type));         \
 		else                                                             \
-			(dst) = (type *) realloc((dst), (ele_count) * sizeof(type)); \
+			(dst) = (type *) OPUS_REALLOC((dst), (ele_count) * sizeof(type)); \
 	} while (0)
 
 	uint64_t max_triangles, i;

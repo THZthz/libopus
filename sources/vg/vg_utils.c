@@ -16,25 +16,25 @@
 #include "vg/vg_utils.h"
 #include "vg/pluto/plutovg-private.h"
 
-void vg_pl_line(plutovg_t *vg, opus_real sx, opus_real sy, opus_real ex, opus_real ey)
+void opus_pl_line(plutovg_t *vg, opus_real sx, opus_real sy, opus_real ex, opus_real ey)
 {
 	plutovg_move_to(vg, sx, sy);
 	plutovg_line_to(vg, ex, ey);
 }
 
-void vg_pl_line_vec(plutovg_t *vg, opus_vec2 s, opus_vec2 e)
+void opus_pl_line_vec(plutovg_t *vg, opus_vec2 s, opus_vec2 e)
 {
-	vg_pl_line(vg, s.x, s.y, e.x, e.y);
+	opus_pl_line(vg, s.x, s.y, e.x, e.y);
 }
 
-void vg_pl_path(plutovg_t *vg, opus_vec2 *path, size_t n)
+void opus_pl_path(plutovg_t *vg, opus_vec2 *path, size_t n)
 {
 	uint64_t i;
 	plutovg_move_to(vg, path[0].x, path[0].y);
 	for (i = 1; i < n; i++) plutovg_line_to(vg, path[i].x, path[i].y);
 }
 
-void vg_pl_arrow(plutovg_t *vg, opus_vec2 origin, opus_vec2 dir, opus_real deflection,
+void opus_pl_arrow(plutovg_t *vg, opus_vec2 origin, opus_vec2 dir, opus_real deflection,
                  opus_real len_head, opus_real len_body)
 {
 	opus_vec2 p, tmp;
@@ -60,7 +60,7 @@ void vg_pl_arrow(plutovg_t *vg, opus_vec2 origin, opus_vec2 dir, opus_real defle
  * @param x
  * @param y
  */
-void vg_pl_text_n(plutovg_t *vg, const char *text, int len, opus_real x, opus_real y)
+void opus_pl_text_n(plutovg_t *vg, const char *text, int len, opus_real x, opus_real y)
 {
 	double font_size;
 	OPUS_NOT_NULL(vg->state->font);
@@ -68,7 +68,7 @@ void vg_pl_text_n(plutovg_t *vg, const char *text, int len, opus_real x, opus_re
 	plutovg_textn(vg, text, len, x, y + plutovg_font_get_ascent(vg->state->font));
 }
 
-void vg_pl_text(plutovg_t *vg, const char *text, opus_real x, opus_real y)
+void opus_pl_text(plutovg_t *vg, const char *text, opus_real x, opus_real y)
 {
 	OPUS_NOT_NULL(vg->state->font);
 	plutovg_text(vg, text, x, y + plutovg_font_get_ascent(vg->state->font));
@@ -89,7 +89,7 @@ void vg_pl_text(plutovg_t *vg, const char *text, opus_real x, opus_real y)
  * @param split_word 1 if you want to display a '-' after the English word are cut
  * @param line_spacing space for each line
  */
-void vg_pl_text_box(plutovg_t *vg, const char *text, int len, opus_real x, opus_real y,
+void opus_pl_text_box(plutovg_t *vg, const char *text, int len, opus_real x, opus_real y,
                     opus_real max_width, opus_real max_height, opus_real margin_x,
                     opus_real margin_y, int split_word, opus_real line_spacing)
 {
@@ -136,13 +136,13 @@ void vg_pl_text_box(plutovg_t *vg, const char *text, int len, opus_real x, opus_
 		if (max_height >= 0 && offset_y + font_size + 2 * margin_y > max_height) break;
 
 		/* draw text path */
-		vg_pl_text_n(vg, last_start, (int) (ptr - last_start), x, y + offset_y);
+		opus_pl_text_n(vg, last_start, (int) (ptr - last_start), x, y + offset_y);
 		if (add_connect_char) {
 			double last2_char_advance =
 			        plutovg_font_get_char_advance(vg->state->font, (int) *(ptr - 1)) +
 			        plutovg_font_get_char_advance(vg->state->font, (int) *(ptr - 2));
-			vg_pl_text(vg, "-", x + advance - last2_char_advance,
-			           y + offset_y + plutovg_font_get_descent(vg->state->font));
+			opus_pl_text(vg, "-", x + advance - last2_char_advance,
+			             y + offset_y + plutovg_font_get_descent(vg->state->font));
 		}
 
 		/* proceed to next row of text */

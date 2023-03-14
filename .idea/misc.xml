@@ -3,7 +3,10 @@
   <component name="CMakeWorkspace" PROJECT_DIR="$PROJECT_DIR$" />
   <component name="CidrRootsConfiguration">
     <excludeRoots>
+      <file path="$PROJECT_DIR$/sources/data_structure/deprecated" />
       <file path="$PROJECT_DIR$/sources/physics/matter" />
+      <file path="$PROJECT_DIR$/sources/physics/outdated" />
+      <file path="$PROJECT_DIR$/sources/physics/outdated/matter" />
     </excludeRoots>
   </component>
 </project>

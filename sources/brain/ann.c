@@ -105,7 +105,7 @@ static OPUS_INLINE opus_real dot_(const opus_real *a, const opus_real *b, uint32
 
 opus_ann *opus_ann_create(uint32_t n_layer, const uint32_t *nmap)
 {
-	opus_ann *net = (opus_ann *) malloc(sizeof(opus_ann));
+	opus_ann *net = (opus_ann *) OPUS_MALLOC(sizeof(opus_ann));
 	OPUS_NOT_NULL(net);
 	return opus_ann_init(net, n_layer, nmap);
 }
@@ -118,9 +118,9 @@ opus_ann *opus_ann_init(opus_ann *net, uint32_t n_layer, const uint32_t *nmap)
 	net->n_input_  = nmap[0];
 	net->n_output_ = nmap[n_layer - 1];
 
-	net->nmap_  = (uint32_t *) malloc(sizeof(uint32_t) * n_layer);
-	net->tnmap_ = (uint32_t *) malloc(sizeof(uint32_t) * (n_layer + 1));
-	net->wmap_  = (uint32_t *) malloc(sizeof(uint32_t) * (n_layer + 1));
+	net->nmap_  = (uint32_t *) OPUS_MALLOC(sizeof(uint32_t) * n_layer);
+	net->tnmap_ = (uint32_t *) OPUS_MALLOC(sizeof(uint32_t) * (n_layer + 1));
+	net->wmap_  = (uint32_t *) OPUS_MALLOC(sizeof(uint32_t) * (n_layer + 1));
 
 	/* set neuron map information */
 	net->n_neuron_ = 0;
@@ -147,9 +147,9 @@ opus_ann *opus_ann_init(opus_ann *net, uint32_t n_layer, const uint32_t *nmap)
 		}
 		net->wmap_[i] = net->wmap_[i - 1] + (nmap[i - 2] + 1) * nmap[i - 1];
 
-		net->errors_  = (opus_real *) malloc(sizeof(opus_real) * (n_neuron - n_input));
-		net->weights  = (opus_real *) malloc(sizeof(opus_real) * n_link);
-		net->outputs_ = (opus_real *) malloc(sizeof(opus_real) * n_neuron);
+		net->errors_  = (opus_real *) OPUS_MALLOC(sizeof(opus_real) * (n_neuron - n_input));
+		net->weights  = (opus_real *) OPUS_MALLOC(sizeof(opus_real) * n_link);
+		net->outputs_ = (opus_real *) OPUS_MALLOC(sizeof(opus_real) * n_neuron);
 
 		memset(net->weights, 0, sizeof(opus_real) * n_link);
 		memset(net->outputs_, 0, sizeof(opus_real) * n_neuron);
@@ -161,15 +161,15 @@ opus_ann *opus_ann_init(opus_ann *net, uint32_t n_layer, const uint32_t *nmap)
 
 void opus_ann_done(opus_ann *net)
 {
-	if (net->weights) free(net->weights);
-	if (net->errors_) free(net->errors_);
-	if (net->outputs_) free(net->outputs_);
+	if (net->weights) OPUS_FREE(net->weights);
+	if (net->errors_) OPUS_FREE(net->errors_);
+	if (net->outputs_) OPUS_FREE(net->outputs_);
 }
 
 void opus_ann_destroy(opus_ann *net)
 {
 	opus_ann_done(net);
-	free(net);
+	OPUS_FREE(net);
 }
 
 /* randomize all the weights of the network from -0.5 to 0.5  */
@@ -347,11 +347,11 @@ opus_ann *opus_ann_load(FILE *in)
 	uint32_t    n_layer, *nmap;
 
 	fread(&n_layer, sizeof(uint32_t), 1, in);
-	nmap = (uint32_t *) malloc(sizeof(uint32_t) * n_layer);
+	nmap = (uint32_t *) OPUS_MALLOC(sizeof(uint32_t) * n_layer);
 	fread(nmap, sizeof(uint32_t), n_layer, in);
 
 	net = opus_ann_create(n_layer, nmap);
-	free(nmap);
+	OPUS_FREE(nmap);
 
 	fread(net->weights, sizeof(opus_real), net->wmap_[net->n_layer_], in);
 

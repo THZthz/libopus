@@ -36,16 +36,23 @@ extern "C" {
 #include <stdlib.h>
 #include <string.h>
 
-#define OPUS_RETURN_IF(ret, cond) if (cond) return ret
+#define OPUS_RETURN_IF(ret, cond) \
+	if (cond) return ret
 #define OPUS_TO_STRING_(v) OPUS_TO_STRING__(v)
 #define OPUS_TO_STRING__(v) #v
 #define OPUS_DO_NOTHING_() \
-	do {             \
-		for (; 0;)   \
-			;        \
+	do {                   \
+		for (; 0;)         \
+			;              \
 	} while (0)
 
 /* clang-format off */
+#define OPUS_MALLOC(_size) (malloc(_size))
+#define OPUS_CALLOC(_ele_count, _ele_size) (calloc((_ele_count), (_ele_size)))
+#define OPUS_REALLOC(_old_ptr, _new_size) realloc((_old_ptr), (_new_size))
+#define OPUS_FREE(_ptr) do { OPUS_FREE_R(_ptr); (_ptr) = NULL; } while (0)/* free left operand */
+#define OPUS_FREE_R(_ptr) do { if (_ptr) free(_ptr); } while(0) /* free right operand */
+
 #ifdef _NDEBUG
 #define OPUS_ASSERT(cond)
 #define OPUS_INFO
@@ -70,16 +77,16 @@ extern "C" {
 #define UNLIKELY(x) x
 #define UNUSED
 #pragma warning(disable : 4996) /* For fscanf */
-#endif /*__GNUC__ */
+#endif                          /*__GNUC__ */
 
 #ifdef OPUS_C99
 #define OPUS_SELECT_FUNC_ARGS_0_3__(x, A, B, C, FUNC, ...) FUNC
 #define OPUS_SELECT_FUNC_ARGS_0_3(_0, _1, _2, _3, ...) \
 	OPUS_SELECT_FUNC_ARGS_0_3__(, ##__VA_ARGS__,       \
-	                       _3(__VA_ARGS__),       \
-	                       _2(__VA_ARGS__),       \
-	                       _1(__VA_ARGS__),       \
-	                       _0(__VA_ARGS__))
+	                            _3(__VA_ARGS__),       \
+	                            _2(__VA_ARGS__),       \
+	                            _1(__VA_ARGS__),       \
+	                            _0(__VA_ARGS__))
 #endif
 
 #ifndef OPUS_INLINE

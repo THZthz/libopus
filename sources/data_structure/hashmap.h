@@ -12,12 +12,21 @@
 extern "C" {
 #endif /* __cplusplus */
 
+#define opus_hashmap_foreach_start(_map, _ele_ptr, _i)            \
+	do {                                                          \
+		for ((_i) = 0; (_i) < (_map)->buckets_capacity; (_i)++) { \
+			(_ele_ptr) = opus_hashmap_probe((_map), (_i));        \
+			if (!(_ele_ptr)) continue;
+#define opus_hashmap_foreach_end() \
+	}                              \
+	}                              \
+	while (0)
 
-typedef struct hashmap hashmap_t;
-typedef int (*hashmap_compare_cb)(hashmap_t *map, const void *a, const void *b, void *user_data);
-typedef uint64_t (*hashmap_hash_cb)(hashmap_t *map, const void *ele, uint64_t seed0, uint64_t seed1, void *user_data);
-typedef void (*hashmap_ele_free_cb)(hashmap_t *map, const void *ele, void *user_data);
-typedef void (*hashmap_print_data_cb)(const void *ele, char *text, uint64_t n);
+typedef struct opus_hashmap opus_hashmap;
+typedef int (*opus_hashmap_compare_cb)(opus_hashmap *map, const void *ele_ptr_a, const void *ele_ptr_b, void *user_data);
+typedef uint64_t (*opus_hashmap_hash_cb)(opus_hashmap *map, const void *ele_ptr, uint64_t seed0, uint64_t seed1, void *user_data);
+typedef void (*opus_hashmap_ele_free_cb)(opus_hashmap *map, const void *ele_ptr, void *user_data);
+typedef void (*opus_hashmap_print_data_cb)(const void *ele, char *text, uint64_t n);
 
 /**
  * <h2>ROBIN HOOD HASHING</h2>
@@ -43,43 +52,46 @@ typedef void (*hashmap_print_data_cb)(const void *ele, char *text, uint64_t n);
  *
  * for more information about the implementation, please refer to <a>https://programming.guide/robin-hood-hashing.html</a>
  */
-struct hashmap {
+struct opus_hashmap {
 	uint64_t ele_size;         /* size of elements stored in this map */
 	uint64_t bucket_size;      /* size of bucket (ele_size + sizeof(struct _bucket)) */
 	uint64_t buckets_capacity; /* size of slots allocated for buckets */
 	uint64_t buckets_used;     /* size of elements stored in this map */
 
-	uint64_t   grow_at_;     /* if the count of buckets used in the hashmap reaches the count, hashmap will grow its memory usage */
-	uint64_t   shrink_at_;   /* if the count of buckets used in the hashmap reaches the count, hashmap will shrink its memory usage */
-	uint64_t   mask_;        /* mask for hashmap_bucket_idx, for internal usage, will always be buckets_capacity - 1 */
+	uint64_t grow_at_;     /* if the count of buckets used in the hashmap reaches the count, hashmap will grow its memory usage */
+	uint64_t shrink_at_;   /* if the count of buckets used in the hashmap reaches the count, hashmap will shrink its memory usage */
+	uint64_t mask_;        /* mask for hashmap_bucket_idx, for internal usage, will always be buckets_capacity - 1 */
 	uint64_t seed0, seed1; /* seed number for hash_cb to generate hash value */
 	void    *user_data;    /* hashmap do not allocate memory for this */
 	void    *ele_data_;    /* (has its own memory allocated) */
 	void    *temp_data_;   /* for swapping(has its own memory allocated) */
 	void    *buckets_;     /* stores data for buckets */
 
-	hashmap_compare_cb  compare_cb_;
-	hashmap_hash_cb     hash_cb_;
-	hashmap_ele_free_cb ele_free_cb_;
+	opus_hashmap_compare_cb  compare_cb_;
+	opus_hashmap_hash_cb     hash_cb_;
+	opus_hashmap_ele_free_cb ele_free_cb_;
 };
 
-hashmap_t *hashmap_init(hashmap_t *map, uint64_t ele_size, uint64_t capacity, uint64_t seed0, uint64_t seed1,
-                        hashmap_compare_cb compare, hashmap_hash_cb hash, hashmap_ele_free_cb ele_free);
-hashmap_t *hashmap_create(uint64_t ele_size, uint64_t capacity, uint64_t seed0, uint64_t seed1,
-                          hashmap_compare_cb compare, hashmap_hash_cb hash, hashmap_ele_free_cb ele_free);
-void       hashmap_destroy(hashmap_t *map);
-void      *hashmap_insert(hashmap_t *map, void *ele);
-void      *hashmap_retrieve(hashmap_t *map, void *ele);
-void       hashmap_clear(hashmap_t *map);
-void      *hashmap_probe(hashmap_t *hashmap, uint64_t index);
-void       hashmap_get_bucket_info(hashmap_t *hashmap, uint64_t index, unsigned int *psl, void **ele);
+opus_hashmap *opus_hashmap_init(opus_hashmap *map, uint64_t ele_size, uint64_t capacity, uint64_t seed0, uint64_t seed1,
+                                opus_hashmap_compare_cb compare, opus_hashmap_hash_cb hash, opus_hashmap_ele_free_cb ele_free);
+opus_hashmap *opus_hashmap_create(uint64_t ele_size, uint64_t capacity, uint64_t seed0, uint64_t seed1,
+                                  opus_hashmap_compare_cb compare, opus_hashmap_hash_cb hash, opus_hashmap_ele_free_cb ele_free);
 
-void     hashmap_dump(hashmap_t *map, FILE *fp, hashmap_print_data_cb print_data);
-uint64_t hashmap_simple_hash(hashmap_t *map, void *key, int count);
-uint64_t hashmap_murmur(const void *data, uint64_t count, uint64_t seed0, uint64_t seed1);
+void  opus_hashmap_done(opus_hashmap *map);
+void  opus_hashmap_destroy(opus_hashmap *map);
+void *opus_hashmap_insert(opus_hashmap *map, void *ele_ptr);
+void *opus_hashmap_delete(opus_hashmap *map, void *ele_ptr);
+void *opus_hashmap_remove(opus_hashmap *map, void *ele_ptr);
+void *opus_hashmap_retrieve(opus_hashmap *map, void *ele_ptr);
+void  opus_hashmap_clear(opus_hashmap *map);
+void *opus_hashmap_probe(opus_hashmap *hashmap, uint64_t index);
+void  opus_hashmap_get_bucket_info(opus_hashmap *hashmap, uint64_t index, unsigned int *psl, void **ele);
+
+void     opus_hashmap_dump(opus_hashmap *map, FILE *fp, opus_hashmap_print_data_cb print_data);
+uint64_t opus_hashmap_simple_hash(opus_hashmap *map, void *key, int count);
+uint64_t opus_hashmap_murmur(const void *data, uint64_t count, uint64_t seed0, uint64_t seed1);
 
 #ifdef __cplusplus
 };
 #endif /* __cplusplus */
 #endif /* HASHMAP_H */
-

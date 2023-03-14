@@ -13,210 +13,145 @@
  */
 
 #include "data_structure/heap.h"
-#include "utils/utils.h"
 
-#include <assert.h>
-#include <stddef.h>
-#include <stdlib.h>
-#include <string.h>
+#define ELE_PTR(_heap, _i) ((char *) (_heap)->data_ + (_heap)->ele_size * (_i))
+#define PARENT(_i) ((_i) / 2)
+#define LEFT(_i) ((_i) *2)
+#define RIGHT(_i) ((_i) *2 + 1)
 
-#define ELE_AT(heap, i) ((void *) ((char *) (heap)->data_ + (heap)->ele_size * (i)))
-#define PARENT(id) (((id) -1) >> 1)
-#define LEFT_CHILD(id) (2 * (id) + 1)
-
-/**
- * @brief (adapted from python Lib/heapq.py)
- * @param heap a heap at all indices >= startpos, except possibly for pos
- * @param start_pos
- * @param pos the index of a leaf with a possibly out-of-order value
- * @return 0 if succeed
- */
-int heap_sift_down(heap_t *heap, size_t start_pos, size_t pos)
+uint64_t opus_heap_parent(uint64_t index)
 {
-	void *new_ele;
+	return index / 2;
+}
 
-	new_ele = malloc(heap->ele_size);
-	if (!new_ele) return 1;
+uint64_t opus_heap_left_child(uint64_t index)
+{
+	return 2 * index;
+}
 
-	memcpy(new_ele, ELE_AT(heap, pos), heap->ele_size);
+uint64_t opus_heap_right_child(uint64_t index)
+{
+	return 2 * index + 1;
+}
 
-	/* follow the path to the root, moving parents down until finding a place "new_ele" fits. */
-	while (pos > start_pos) {
-		size_t parent_pos = PARENT(pos);
-		void  *parent     = ELE_AT(heap, parent_pos);
-		assert(pos >= 1);
-		if (heap->compare_(heap, new_ele, parent) < 0) {
-			memcpy(ELE_AT(heap, pos), parent, heap->ele_size);
-			pos = parent_pos;
-			continue;
-		}
-		break;
+opus_heap *opus_heap_init(opus_heap *heap, uint64_t ele_size, opus_heap_compare_cb compare)
+{
+	if (heap) {
+		heap->ele_size   = ele_size;
+		heap->last_index = 0;
+		opus_arr_create(heap->data_, ele_size);
+		opus_arr_reserve(heap->data_, OPUS_HEAP_INITIAL_SIZE + 1);
+		opus_arr_set_len(heap->data_, 1);
+		heap->compare_ = compare;
 	}
-	memcpy(ELE_AT(heap, pos), new_ele, heap->ele_size);
-	free(new_ele);
+	return heap;
+}
 
-	return 0;
+opus_heap *opus_heap_create(uint64_t ele_size, opus_heap_compare_cb compare)
+{
+	opus_heap *heap;
+	heap = OPUS_MALLOC(sizeof(opus_heap));
+	return opus_heap_init(heap, ele_size, compare);
+}
+
+void opus_heap_done(opus_heap *heap)
+{
+	opus_arr_destroy(heap->data_);
+}
+
+void opus_heap_destroy(opus_heap *heap)
+{
+	opus_heap_done(heap);
+	OPUS_FREE(heap);
+}
+
+void opus_heap_swap(opus_heap *heap, uint64_t i, uint64_t j)
+{
+	memcpy(heap->data_, ELE_PTR(heap, i), heap->ele_size);
+	memcpy(ELE_PTR(heap, i), ELE_PTR(heap, j), heap->ele_size);
+	memcpy(ELE_PTR(heap, j), heap->data_, heap->ele_size);
 }
 
 /**
- * @brief (adapted from python Lib/heapq.py)
+ * @brief iteratively compare child with parent, and exchange them if the child is bigger (max binary heap)
+ * 		until child is not bigger than its parent or it becomes the root
  * @param heap
- * @param pos
+ * @param index
+ */
+void opus_heap_sift_up(opus_heap *heap, uint64_t index)
+{
+	uint64_t child, parent;
+	for (child  = index;
+	     parent = PARENT(child), child > 1 && heap->compare_(heap, ELE_PTR(heap, parent), ELE_PTR(heap, child)) < 0;
+	     child  = parent)
+        opus_heap_swap(heap, child, PARENT(child));
+}
+
+/**
+ * @brief find the child we need to compare with parent
+ * @param heap
+ * @param index
  * @return
  */
-int heap_sift_up(heap_t *heap, size_t pos)
+static uint64_t proper_child_(opus_heap *heap, uint64_t index)
 {
-	size_t start_pos = pos;
-	size_t end_pos   = heap->n_used;
-	size_t child_pos;
-	void  *new_ele;
-
-	new_ele = malloc(heap->ele_size);
-	if (!new_ele) return 1; /* no enough space */
-
-	memcpy(new_ele, ELE_AT(heap, pos), heap->ele_size);
-
-	/* bubble up the smaller child until hitting a leaf */
-	child_pos = LEFT_CHILD(start_pos);
-
-	while (child_pos < end_pos) {
-		/* set child_pos to the index of smaller child */
-		if (child_pos + 1 < end_pos && heap->compare_(heap, ELE_AT(heap, child_pos + 1), ELE_AT(heap, child_pos)) < 0) {
-			child_pos++;
-		}
-
-		/* bubble the smaller child up */
-		memcpy(ELE_AT(heap, pos), ELE_AT(heap, child_pos), heap->ele_size);
-
-		pos       = child_pos;
-		child_pos = LEFT_CHILD(pos);
-	}
-
-	/* the child at "pos" is empty now, so put "new_ele" here and bubble it up to its final resting place (by sifting its parents down) */
-	memcpy(ELE_AT(heap, pos), new_ele, heap->ele_size);
-	heap_sift_down(heap, start_pos, pos);
-
-	free(new_ele);
-
-	return 0;
+	return index * 2 +
+	       (index * 2 + 1 <= heap->last_index &&
+	        heap->compare_(heap, ELE_PTR(heap, RIGHT(index)), ELE_PTR(heap, LEFT(index))) > 0);
 }
 
 /**
- * @brief (adapted from python Lib/heapq.py)
+ * @brief iteratively compare parent with its bigger child and swap them if parent is smaller (max binary heap)
+ * 		until parent is not smaller than any of its child or it becomes the leaf
  * @param heap
+ * @param index
  */
-void heap_build(heap_t *heap)
+void opus_heap_sift_down(opus_heap *heap, uint64_t index)
 {
-	/* python Lib/heapq.py version: */
-	size_t n = heap->n_used, i = n / 2 + 1;
-	while (i-- > 0) heap_sift_up(heap, i);
+	uint64_t parent, child;
+	for (parent = index, child = proper_child_(heap, index);
+	     child <= heap->last_index && heap->compare_(heap, ELE_PTR(heap, child), ELE_PTR(heap, parent)) > 0;
+	     parent = child, child = proper_child_(heap, child))
+		opus_heap_swap(heap, parent, child);
 }
 
-void *heap_top(heap_t *heap)
+void opus_heap_insert(opus_heap *heap, void *ele_ptr)
 {
-	if (heap->n_used == 0) return NULL;
+	opus_arr_push(heap->data_, ele_ptr);
+	heap->last_index++;
+	opus_heap_sift_up(heap, heap->last_index);
+}
+
+/**
+ * @brief pop root
+ * @param heap
+ * @return pointer of element, notice that this is convenient for releasing memory
+ */
+void *opus_heap_pop(opus_heap *heap)
+{
+	opus_heap_swap(heap, 1, 0);
+	opus_heap_sift_down(heap, 0);
 	return heap->data_;
 }
 
-void *heap_push2(heap_t *heap, void *ele)
+void *opus_heap_top(opus_heap *heap)
 {
-	if (heap->n_used == heap->capacity) return NULL; /* the heap is full already */
-	memcpy(ELE_AT(heap, heap->n_used), ele, heap->ele_size);
-	heap_sift_down(heap, 0, heap->n_used);
-	heap->n_used++;
-	return ele;
+	return ELE_PTR(heap, 1);
 }
 
-void *heap_remove2(heap_t *heap, size_t pos)
+/**
+ * @brief assume heap's data is now an unsorted array, we build binary heap based on it
+ * @param heap
+ * @param n size of the array (data)
+ */
+void opus_heap_update(opus_heap *heap, uint64_t n)
 {
-	void *tmp;
-
-	tmp = malloc(heap->ele_size);
-	if (!tmp) return NULL;
-	memcpy(tmp, ELE_AT(heap, pos), heap->ele_size);
-	memcpy(ELE_AT(heap, pos), ELE_AT(heap, heap->n_used - 1), heap->ele_size);
-	memcpy(ELE_AT(heap, heap->n_used - 1), tmp, heap->ele_size);
-	free(tmp);
-	heap->n_used--;
-	heap_sift_up(heap, 0);
-	return ELE_AT(heap, heap->n_used);
-}
-
-void *heap_pop2(heap_t *heap)
-{
-	return heap_remove2(heap, 0);
-}
-
-void *heap_remove(heap_t *heap, size_t idx)
-{
-	size_t c_idx;
-	void  *temp, *ret;
-
-	/* cannot remove any element */
-	if (heap->n_used == 0) return NULL;
-	if (idx >= heap->n_used) return NULL;
-
-	/* if there only exist one element in the heap */
-	if (idx == 0 && heap->n_used == 1) {
-		heap->n_used--;
-		return heap->data_;
-	}
-
-	temp = malloc(heap->ele_size);
-	if (OPUS_UNLIKELY(!temp)) return NULL; /* unlikely */
-
-	/* exchange current element and the last element */
-	ret = ELE_AT(heap, heap->n_used - 1);
-	memcpy(temp, ELE_AT(heap, idx), heap->ele_size);
-	memcpy(ELE_AT(heap, idx), ret, heap->ele_size);
-	memcpy(ret, temp, heap->ele_size);
-
-	/* sink down */
-	c_idx = LEFT_CHILD(idx);
-	memcpy(temp, ELE_AT(heap, idx), heap->ele_size);
-	heap->n_used--;
-	while (c_idx < heap->n_used) {
-		/* if right child is smaller */
-		if (c_idx + 1 < heap->n_used && heap->compare_(heap, ELE_AT(heap, c_idx + 1), ELE_AT(heap, c_idx)) < 0) {
-			c_idx++;
-		}
-		if (heap->compare_(heap, temp, ELE_AT(heap, c_idx)) <= 0) break;
-
-		memcpy(ELE_AT(heap, idx), ELE_AT(heap, c_idx), heap->ele_size);
-		idx   = c_idx;
-		c_idx = LEFT_CHILD(idx);
-	}
-	memcpy(ELE_AT(heap, idx), temp, heap->ele_size);
-	free(temp);
-
-	return ret;
-}
-
-void *heap_push(heap_t *heap, void *ele)
-{
-	size_t p_idx, idx;
-
-	/* the heap is full */
-	if (heap->n_used == heap->capacity) return NULL;
-
-	/* sift up */
-	idx = heap->n_used;
-	for (;;) {
-		if (idx == 0) break; /* reach the root, which has no parents */
-
-		p_idx = PARENT(idx);
-		if (heap->compare_(heap, ele, ELE_AT(heap, p_idx)) >= 0) break;
-
-		memcpy(ELE_AT(heap, idx), ELE_AT(heap, p_idx), heap->ele_size);
-		idx = p_idx;
-	}
-	memcpy(ELE_AT(heap, idx), ele, heap->ele_size);
-	heap->n_used++;
-
-	return ele;
-}
-
-void *heap_pop(heap_t *heap)
-{
-	return heap_remove(heap, 0);
+	uint64_t i;
+	opus_arr_set_len(heap->data_, 0);
+	opus_arr_reserve(heap->data_, 1 + n);
+	memmove(ELE_PTR(heap, 1), ELE_PTR(heap, 0), n * heap->ele_size);
+	for (i = n / 2; i > 0; --i)
+		opus_heap_sift_down(heap, i);
+	opus_arr_set_len(heap->data_, n + 1);
+	heap->last_index = n;
 }

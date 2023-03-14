@@ -259,7 +259,7 @@ void render(engine_t *eng)
 			graph_id2xy(path[i], graph_grid_get_width(paras.graph), &x, &y);
 			fill_rect(ox + x * tw + tw / 4, oy + y * th + th / 4, tw / 2, th / 2, COLOR_ALICE_BLUE);
 		}
-		if (path != NULL) free(path);
+		if (path != NULL) OPUS_FREE(path);
 	}
 }
 

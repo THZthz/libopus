@@ -24,9 +24,9 @@ struct overlap_ {
 };
 
 static opus_vec2 *SAT_get_transformed_vertices_(opus_polygon *polygon,
-                                                opus_mat2d               transform)
+                                                opus_mat2d    transform)
 {
-	size_t i;
+	size_t     i;
 	opus_vec2 *vertices = malloc(sizeof(opus_vec2) * polygon->n);
 	if (vertices) {
 		memcpy(vertices, polygon->vertices, sizeof(opus_vec2) * polygon->n);
@@ -48,11 +48,11 @@ static opus_vec2 *SAT_get_transformed_vertices_(opus_polygon *polygon,
 static int SAT_overlap_axes_(struct overlap_ *result, opus_vec2 *verts_a, opus_vec2 *verts_b, size_t na,
                              size_t nb)
 {
-	size_t i, j;
-	opus_vec2   axis;
-	opus_real   dot;
-	opus_real   overlap, overlap_ab, overlap_ba;
-	opus_vec2   projection_a, projection_b; /* [min, max] */
+	size_t    i, j;
+	opus_vec2 axis;
+	opus_real dot;
+	opus_real overlap, overlap_ab, overlap_ba;
+	opus_vec2 projection_a, projection_b; /* [min, max] */
 
 	result->overlap = OPUS_REAL_MAX;
 
@@ -95,10 +95,10 @@ static int SAT_overlap_axes_(struct overlap_ *result, opus_vec2 *verts_a, opus_v
 
 static opus_overlap_result SAT_polygon_polygon_(opus_polygon *A,
                                                 opus_polygon *B,
-                                                     opus_mat2d transform_a, opus_mat2d transform_b)
+                                                opus_mat2d transform_a, opus_mat2d transform_b)
 {
-	opus_overlap_result      result = {0};
-	struct overlap_          r, ra, rb;
+	opus_overlap_result result = {0};
+	struct overlap_     r, ra, rb;
 
 	opus_vec2  c1, c2;
 	opus_vec2 *verts_a = NULL, *verts_b = NULL;
@@ -127,7 +127,7 @@ static opus_overlap_result SAT_polygon_polygon_(opus_polygon *A,
 		result.A = (opus_shape *) A;
 		result.B = (opus_shape *) B;
 	} else {
-		r = rb;
+		r           = rb;
 		swap_factor = -1;
 		opus_mat2d_copy(result.transform_a, transform_b);
 		opus_mat2d_copy(result.transform_b, transform_a);
@@ -137,7 +137,7 @@ static opus_overlap_result SAT_polygon_polygon_(opus_polygon *A,
 	/* 2nd: make sure normal is pointing to B */
 	opus_mar2d_pre_mul_xy(&c1.x, &c1.y, transform_a, 0, 0);
 	opus_mar2d_pre_mul_xy(&c2.x, &c2.y, transform_b, 0, 0);
-	result.normal = opus_vec2_dot(opus_vec2_to(c1, c2), r.axis) * swap_factor < 0 ? opus_vec2_neg(r.axis) : r.axis;
+	result.normal     = opus_vec2_dot(opus_vec2_to(c1, c2), r.axis) * swap_factor < 0 ? opus_vec2_neg(r.axis) : r.axis;
 	result.separation = r.overlap;
 
 	return result;
@@ -149,20 +149,20 @@ EXIT_AND_CLEANUP:
 	return result;
 }
 
-static opus_overlap_result SAT_polygon_circle_(opus_polygon  *A,
+static opus_overlap_result SAT_polygon_circle_(opus_polygon *A,
                                                opus_circle  *B,
-                                                    opus_mat2d transform_a, opus_mat2d transform_b)
+                                               opus_mat2d transform_a, opus_mat2d transform_b)
 {
 	opus_overlap_result result = {0};
 
 	opus_vec2  center_a, center_b;
 	opus_vec2 *verts_a;
 
-	size_t i, j;
-	opus_vec2   axis;
-	opus_vec2   projection_a, projection_b, min_axis;
-	opus_real   dot, overlap, min_overlap, overlap_ab, overlap_ba;
-	opus_vec2   p;
+	size_t    i, j;
+	opus_vec2 axis;
+	opus_vec2 projection_a, projection_b, min_axis;
+	opus_real dot, overlap, min_overlap, overlap_ab, overlap_ba;
+	opus_vec2 p;
 
 	/* when using SAT, we must first translate the local vertices to world vertices */
 	verts_a = SAT_get_transformed_vertices_(A, transform_a);
@@ -173,7 +173,7 @@ static opus_overlap_result SAT_polygon_circle_(opus_polygon  *A,
 	/* check overlapping axes */
 	min_overlap = OPUS_REAL_MAX;
 	for (i = 0; i < A->n; i++) {
-		axis = opus_vec2_sub(verts_a[i], i == A->n - 1 ? verts_a[0] : verts_a[i + 1]);
+		axis = opus_vec2_sub(verts_a[i], verts_a[(i + 1) % A->n]);
 		axis = opus_vec2_norm(opus_vec2_perp(axis));
 
 		/* project polygon A's vertex on the axis */
@@ -185,9 +185,10 @@ static opus_overlap_result SAT_polygon_circle_(opus_polygon  *A,
 		}
 
 		/* project circle B on the axis */
-		dot            = opus_vec2_dot(center_b, axis);
-		projection_b.y = dot + B->radius;
-		projection_b.x = dot - B->radius;
+		p              = opus_vec2_scale(axis, B->radius);
+		projection_b.y = opus_vec2_dot(opus_vec2_add(center_b, p), axis);
+		projection_b.x = opus_vec2_dot(opus_vec2_sub(center_b, p), axis);
+		if (projection_b.x > projection_b.y) opus_swap(&projection_b.x, &projection_b.y);
 
 		overlap_ab = projection_a.y - projection_b.x;
 		overlap_ba = projection_b.y - projection_a.x;
@@ -204,7 +205,7 @@ static opus_overlap_result SAT_polygon_circle_(opus_polygon  *A,
 	result.is_overlap = 1; /* has an axis, then it is overlapping */
 
 	/* meet detector result requirements */
-	result.normal = opus_vec2_dot(opus_vec2_to(center_a, center_b), min_axis) < 0 ? opus_vec2_inv(min_axis) : min_axis;
+	result.normal     = opus_vec2_dot(opus_vec2_to(center_a, center_b), min_axis) < 0 ? opus_vec2_inv(min_axis) : min_axis;
 	result.separation = min_overlap;
 
 	/* set basic information */
@@ -218,14 +219,14 @@ static opus_overlap_result SAT_polygon_circle_(opus_polygon  *A,
 
 
 opus_overlap_result opus_SAT(opus_shape *A, opus_shape *B, opus_mat2d transform_a,
-                                     opus_mat2d transform_b)
+                             opus_mat2d transform_b)
 {
 	opus_overlap_result r0 = {0}; /* just for invalid return */
-	if (A->type_ == PHYSICS_SHAPE_POLYGON && B->type_ == A->type_)
+	if (A->type_ == OPUS_SHAPE_POLYGON && B->type_ == A->type_)
 		return SAT_polygon_polygon_((void *) A, (void *) B, transform_a, transform_b);
-	if (A->type_ == PHYSICS_SHAPE_POLYGON && B->type_ == PHYSICS_SHAPE_CIRCLE)
+	if (A->type_ == OPUS_SHAPE_POLYGON && B->type_ == OPUS_SHAPE_CIRCLE)
 		return SAT_polygon_circle_((void *) A, (void *) B, transform_a, transform_b);
-	if (A->type_ == PHYSICS_SHAPE_CIRCLE && B->type_ == PHYSICS_SHAPE_POLYGON)
+	if (A->type_ == OPUS_SHAPE_CIRCLE && B->type_ == OPUS_SHAPE_POLYGON)
 		return SAT_polygon_circle_((void *) B, (void *) A, transform_b, transform_a);
 	return r0;
 }

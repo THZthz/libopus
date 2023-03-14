@@ -18,7 +18,7 @@
 
 opus_contact* opus_contact_create(opus_body* A, opus_body* B, opus_vec2 pa, opus_vec2 pb, opus_vec2 normal, opus_real depth)
 {
-	opus_contact* contact = calloc(1, sizeof(opus_contact));
+	opus_contact* contact = OPUS_CALLOC(1, sizeof(opus_contact));
 	if (contact) {
 		contact->A         = A;
 		contact->B         = B;
@@ -50,12 +50,16 @@ char* opus_contacts_id(opus_body* A, opus_body* B)
 
 opus_contacts* opus_contacts_create(opus_body* A, opus_body* B)
 {
-	opus_contacts* contacts = calloc(1, sizeof(opus_contacts));
+	opus_contacts* contacts = OPUS_CALLOC(1, sizeof(opus_contacts));
 	if (contacts) {
 		contacts->A = A->id < B->id ? A : B;
 		contacts->B = A->id > B->id ? A : B;
+
+		contacts->friction    = opus_sqrt(A->friction * B->friction);
+		contacts->restitution = opus_sqrt(A->restitution * B->restitution);
+
 		strcpy(contacts->id, opus_contacts_id(A, B));
-		opus_arr_create(contacts->contacts, sizeof(opus_contact *));
+		opus_arr_create(contacts->contacts, sizeof(opus_contact*));
 	}
 	return contacts;
 }

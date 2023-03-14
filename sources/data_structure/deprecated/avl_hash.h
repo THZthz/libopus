@@ -1,7 +1,7 @@
 #ifndef __AVLHASH_H__
 #define __AVLHASH_H__
 
-#include "data_structure/avl.h"
+#include "avl.h"
 
 #ifndef __ILIST_DEF__
 #define __ILIST_DEF__

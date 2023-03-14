@@ -5,10 +5,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-typedef struct _bucket {
+typedef struct bucket__ {
 	uint64_t hash;
 	unsigned psl;
-} _bucket_t;
+} bucket__;
 
 /**
  * @brief copied from https://github.com/rxi/map/tree/master/src
@@ -17,17 +17,16 @@ typedef struct _bucket {
  * @param count
  * @return
  */
-uint64_t hashmap_simple_hash(hashmap_t *map, void *key, int count)
+uint64_t opus_hashmap_simple_hash(opus_hashmap *map, void *key, int count)
 {
 	char    *s    = key;
 	unsigned hash = 5381;
-	while (count-- > 0) {
+	while (count-- > 0)
 		hash = ((hash << 5) + hash) ^ *s++;
-	}
 	return hash;
 }
 
-OPUS_INLINE void hashmap_mm86128_internal(const void *key, const int count, uint32_t seed, void *out)
+OPUS_INLINE void mm86128_(const void *key, const int count, uint32_t seed, void *out)
 {
 #define ROTL32(x, r) (((x) << (r)) | ((x) >> (32 - (r))))
 #define FMIX32(h)      \
@@ -175,10 +174,10 @@ OPUS_INLINE void hashmap_mm86128_internal(const void *key, const int count, uint
  * @param seed1
  * @return
  */
-uint64_t hashmap_murmur(const void *data, uint64_t count, uint64_t seed0, uint64_t seed1)
+uint64_t opus_hashmap_murmur(const void *data, uint64_t count, uint64_t seed0, uint64_t seed1)
 {
 	char out[16];
-	hashmap_mm86128_internal(data, (int) count, seed0, &out);
+	mm86128_(data, (int) count, seed0, &out);
 	return *(uint64_t *) out;
 }
 
@@ -187,7 +186,7 @@ uint64_t hashmap_murmur(const void *data, uint64_t count, uint64_t seed0, uint64
  * @param desired_capacity
  * @return
  */
-OPUS_INLINE uint64_t hashmap_get_proper_capacity(uint64_t desired_capacity)
+OPUS_INLINE uint64_t get_proper_capacity_(uint64_t desired_capacity)
 {
 	uint64_t n_cap = 16;
 	if (desired_capacity < n_cap) {
@@ -212,26 +211,26 @@ OPUS_INLINE uint64_t hashmap_get_proper_capacity(uint64_t desired_capacity)
  * @param ele_free
  * @return
  */
-hashmap_t *hashmap_init(hashmap_t *map, uint64_t ele_size, uint64_t capacity, uint64_t seed0, uint64_t seed1,
-                        hashmap_compare_cb compare, hashmap_hash_cb hash, hashmap_ele_free_cb ele_free)
+opus_hashmap *opus_hashmap_init(opus_hashmap *map, uint64_t ele_size, uint64_t capacity, uint64_t seed0, uint64_t seed1,
+                                opus_hashmap_compare_cb compare, opus_hashmap_hash_cb hash, opus_hashmap_ele_free_cb ele_free)
 {
-	uint64_t bucket_size = sizeof(_bucket_t) + ele_size;
+	uint64_t bucket_size = sizeof(bucket__) + ele_size;
 
-	while (bucket_size & (sizeof(_bucket_t) - 1)) {
+	while (bucket_size & (sizeof(bucket__) - 1)) {
 		bucket_size++;
 	}
 
 	map->ele_size         = ele_size;
 	map->bucket_size      = bucket_size;
-	map->buckets_capacity = hashmap_get_proper_capacity(capacity);
+	map->buckets_capacity = get_proper_capacity_(capacity);
 	map->mask_            = map->buckets_capacity - 1;
 	map->buckets_used     = 0;
-	map->temp_data_       = malloc(map->bucket_size * 2);
+	map->temp_data_       = OPUS_MALLOC(map->bucket_size * 2);
 	if (!map->temp_data_) return NULL;
 	map->ele_data_ = (char *) map->temp_data_ + map->bucket_size;
-	map->buckets_  = malloc(map->bucket_size * map->buckets_capacity);
+	map->buckets_  = OPUS_MALLOC(map->bucket_size * map->buckets_capacity);
 	if (!map->buckets_) {
-		free(map->temp_data_);
+		OPUS_FREE(map->temp_data_);
 		return NULL;
 	}
 
@@ -252,100 +251,115 @@ hashmap_t *hashmap_init(hashmap_t *map, uint64_t ele_size, uint64_t capacity, ui
 	return map;
 }
 
-hashmap_t *hashmap_create(uint64_t ele_size, uint64_t capacity, uint64_t seed0, uint64_t seed1,
-                          hashmap_compare_cb compare, hashmap_hash_cb hash, hashmap_ele_free_cb ele_free)
+opus_hashmap *opus_hashmap_create(uint64_t ele_size, uint64_t capacity, uint64_t seed0, uint64_t seed1,
+                                  opus_hashmap_compare_cb compare, opus_hashmap_hash_cb hash, opus_hashmap_ele_free_cb ele_free)
 {
-	hashmap_t *map = (hashmap_t *) malloc(sizeof(hashmap_t));
+	opus_hashmap *map;
+	map = (opus_hashmap *) OPUS_MALLOC(sizeof(opus_hashmap));
 	if (!map) return NULL;
-	return hashmap_init(map, ele_size, capacity, seed0, seed1, compare, hash, ele_free);
+	return opus_hashmap_init(map, ele_size, capacity, seed0, seed1, compare, hash, ele_free);
 }
 
-OPUS_INLINE uint64_t hashmap_bucket_idx_(hashmap_t *map, uint64_t hash_value)
+OPUS_INLINE uint64_t bucket_idx_(opus_hashmap *map, uint64_t hash_value)
 {
 	/* If the implementation is changed to allow a non-power-of-2 bucket count, */
 	/* the line below should be changed to use mod instead of AND */
 	return hash_value & map->mask_;
 }
 
-OPUS_INLINE _bucket_t *hashmap_bucket_at_(hashmap_t *map, void *buckets, uint64_t i)
+OPUS_INLINE bucket__ *bucket_at_(opus_hashmap *map, void *buckets, uint64_t i)
 {
-	return (_bucket_t *) ((char *) buckets + i * map->bucket_size);
+	return (bucket__ *) ((char *) buckets + i * map->bucket_size);
 }
 
-OPUS_INLINE void *hashmap_bucket_data_(_bucket_t *bucket)
+OPUS_INLINE void *bucket_data_(bucket__ *bucket)
 {
-	return (void *) ((char *) bucket + sizeof(_bucket_t));
+	return (void *) ((char *) bucket + sizeof(bucket__));
 }
 
-OPUS_INLINE uint64_t hashmap_get_hash_(hashmap_t *map, void *ele)
+OPUS_INLINE uint64_t get_hash_(opus_hashmap *map, void *ptr_to_ele)
 {
 	/* clear the 16 bits of the left of the hashed value(for the sake of psl) */
-	return map->hash_cb_(map, ele, map->seed0, map->seed1, map->user_data) << 16 >> 16;
+	return map->hash_cb_(map, ptr_to_ele, map->seed0, map->seed1, map->user_data) << 16 >> 16;
 }
 
-OPUS_INLINE uint64_t hashmap_next_probe_sequence_(hashmap_t *map, uint64_t cur_idx, void *ele)
+OPUS_INLINE uint64_t next_probe_sequence_(opus_hashmap *map, uint64_t cur_idx, void *ele)
 {
 	/* simple linear probe */
-	return hashmap_bucket_idx_(map, cur_idx + 1);
+	return bucket_idx_(map, cur_idx + 1);
 }
 
-void *hashmap_insert_internal_(hashmap_t *map, void *buckets, _bucket_t *bucket_to_insert)
+void *insert_(opus_hashmap *map, void *buckets, bucket__ *bucket_to_insert)
 {
-	uint64_t i = hashmap_bucket_idx_(map, bucket_to_insert->hash);
+	uint64_t  i;
+	bucket__ *bucket;
+	void     *pa, *pb;
+
+	i = bucket_idx_(map, bucket_to_insert->hash);
 	for (;;) {
-		_bucket_t *bucket = hashmap_bucket_at_(map, buckets, i);
+		bucket = bucket_at_(map, buckets, i);
 		if (!bucket->psl) { /* no other items shares the same value with the current item to insert */
 			memcpy(bucket, bucket_to_insert, map->bucket_size);
 			map->buckets_used++;
 			return NULL;
 		}
 		/* test if there exists item of the same hashed value has inserted before */
+		pa = bucket_data_(bucket_to_insert);
+		pb = bucket_data_(bucket);
 		if (bucket->hash == bucket_to_insert->hash &&
-		    map->compare_cb_(map, hashmap_bucket_data_(bucket_to_insert), hashmap_bucket_data_(bucket), map->user_data) == 0) {
+		    map->compare_cb_(map, pa, pb, map->user_data) == 0) {
 			/* let user decide whether to destroy it (free resources of the item) */
-			memcpy(map->temp_data_, hashmap_bucket_data_(bucket), map->ele_size);
+			memcpy(map->temp_data_, pb, map->ele_size);
 			/* replace */
-			memcpy(hashmap_bucket_data_(bucket), hashmap_bucket_data_(bucket_to_insert), map->ele_size);
+			memcpy(pb, pa, map->ele_size);
 			return map->temp_data_;
 		}
-		if ((uint32_t) bucket->psl < (uint32_t) bucket_to_insert->psl) { /* FIXME */
+		if ((uint32_t) bucket->psl < (uint32_t) bucket_to_insert->psl) {
 			memcpy(map->temp_data_, bucket, map->bucket_size);
 			memcpy(bucket, bucket_to_insert, map->bucket_size);
 			memcpy(bucket_to_insert, map->temp_data_, map->bucket_size);
 		}
-		i = hashmap_next_probe_sequence_(map, i, bucket_to_insert);
+		i = next_probe_sequence_(map, i, bucket_to_insert);
 		bucket_to_insert->psl += 1;
 	}
 }
 
 /**
- * @brief use user defined function <b>ele_free_cb</b> to free resources of all the
+ * @brief use user defined function <b>ele_OPUS_FREE_cb</b> to OPUS_FREE resources of all the
  * 		elements stored in the hashmap
  * @param map
  */
-void hashmap_destroy_elements(hashmap_t *map)
+void destroy_elements_(opus_hashmap *map)
 {
+	uint64_t  i;
+	bucket__ *bucket;
+
 	if (map->ele_free_cb_) {
-		uint64_t i;
 		for (i = 0; i < map->buckets_capacity; i++) {
-			_bucket_t *bucket = hashmap_bucket_at_(map, map->buckets_, i);
-			if (bucket->psl) map->ele_free_cb_(map, hashmap_bucket_data_(bucket), map->user_data);
+			bucket = bucket_at_(map, map->buckets_, i);
+			if (bucket->psl) map->ele_free_cb_(map, bucket_data_(bucket), map->user_data);
 		}
 	}
 }
 
-void hashmap_destroy(hashmap_t *map)
+void opus_hashmap_done(opus_hashmap *map)
 {
 	if (!map) return;
-	hashmap_destroy_elements(map);
-	free(map->temp_data_);
-	free(map->buckets_);
-	free(map);
+	destroy_elements_(map);
+	OPUS_FREE(map->temp_data_);
+	OPUS_FREE(map->buckets_);
 }
 
-void hashmap_clear(hashmap_t *map)
+void opus_hashmap_destroy(opus_hashmap *map)
 {
-	hashmap_destroy_elements(map);
+	if (!map) return;
+	opus_hashmap_done(map);
+	OPUS_FREE(map);
+}
+
+void opus_hashmap_clear(opus_hashmap *map)
+{
+	destroy_elements_(map);
 	memset(map->buckets_, 0, map->buckets_capacity * map->bucket_size);
 }
 
@@ -355,10 +369,11 @@ void hashmap_clear(hashmap_t *map)
  * @param capacity must be the multiple of 2
  * @return
  */
-hashmap_t *hashmap_resize(hashmap_t *map, uint64_t capacity)
+opus_hashmap *hashmap_resize(opus_hashmap *map, uint64_t capacity)
 {
-	uint64_t i, old_buckets_capacity;
-	void    *new_buckets;
+	void     *new_buckets;
+	uint64_t  i, old_buckets_capacity;
+	bucket__ *bucket;
 
 	/* reject illegal resize operation */
 	if (capacity % 2 != 0) return map;
@@ -367,25 +382,24 @@ hashmap_t *hashmap_resize(hashmap_t *map, uint64_t capacity)
 		/* we have already reached the need, or we are not trying to shrink the size of hashmap */
 		return map;
 
-	new_buckets = malloc(map->bucket_size * capacity);
+	new_buckets = OPUS_CALLOC(capacity, map->bucket_size);
 	if (!new_buckets) return NULL;
 
 	old_buckets_capacity  = map->buckets_capacity;
 	map->buckets_capacity = capacity;
 	map->mask_            = capacity - 1; /* mask is used in hashmap_bucket_idx */
 	map->buckets_used     = 0;            /* hashmap_insert_internal will update this information */
-	memset(new_buckets, 0, map->bucket_size * capacity);
 
 	/* re-insert all the item from the old hashmap */
 	for (i = 0; i < old_buckets_capacity; i++) {
-		_bucket_t *bucket = hashmap_bucket_at_(map, map->buckets_, i);
+		bucket = bucket_at_(map, map->buckets_, i);
 		if (!bucket->psl) continue; /* no data is stored in this bucket, skip */
 		bucket->psl = 1;
 		/* no need to consider items with duplicated hash value */
-		hashmap_insert_internal_(map, new_buckets, bucket);
+		insert_(map, new_buckets, bucket);
 	}
 
-	free(map->buckets_);
+	OPUS_FREE(map->buckets_);
 	map->buckets_   = new_buckets;
 	map->grow_at_   = (uint64_t) ((double) map->buckets_capacity * HASHMAP_GROW_AT_FACTOR);
 	map->shrink_at_ = (uint64_t) ((double) map->buckets_capacity * HASHMAP_SHRINK_AT_FACTOR);
@@ -396,15 +410,15 @@ hashmap_t *hashmap_resize(hashmap_t *map, uint64_t capacity)
  * @brief insert an element into hashmap, if an element with the same key has already inserted,
  * 		the old will be replaced and returned
  * @param map
- * @param ele
+ * @param ele_ptr pointer of the element to insert
  * @return
  */
-void *hashmap_insert(hashmap_t *map, void *ele)
+void *opus_hashmap_insert(opus_hashmap *map, void *ele_ptr)
 {
-	_bucket_t *bucket_to_insert;
+	bucket__ *bucket_to_insert;
 
 	/* check if you want to insert NULL */
-	if (ele == NULL) return NULL;
+	if (ele_ptr == NULL) return NULL;
 
 	/* check if we need to resize the hashmap */
 	if (map->buckets_used == map->grow_at_) {
@@ -414,35 +428,37 @@ void *hashmap_insert(hashmap_t *map, void *ele)
 	}
 
 	bucket_to_insert       = map->ele_data_;
-	bucket_to_insert->hash = hashmap_get_hash_(map, ele);
+	bucket_to_insert->hash = get_hash_(map, ele_ptr);
 	bucket_to_insert->psl  = 1;
-	memcpy(hashmap_bucket_data_(bucket_to_insert), ele, map->ele_size);
+	memcpy(bucket_data_(bucket_to_insert), ele_ptr, map->ele_size);
 
-	return hashmap_insert_internal_(map, map->buckets_, bucket_to_insert);
+	return insert_(map, map->buckets_, bucket_to_insert);
 }
 
-void *hashmap_delete(hashmap_t *map, void *ele)
+static void *remove_(opus_hashmap *map, void *ele_ptr, int shrink)
 {
 	uint64_t hash;
 	uint64_t i;
 
-	if (!ele)
+	bucket__ *prev, *bucket;
+
+	if (!ele_ptr)
 		return NULL;
 
-	hash = hashmap_get_hash_(map, ele);
-	i    = hashmap_bucket_idx_(map, hash);
+	hash = get_hash_(map, ele_ptr);
+	i    = bucket_idx_(map, hash);
 	for (;;) {
-		_bucket_t *bucket = hashmap_bucket_at_(map, map->buckets_, i);
+		bucket = bucket_at_(map, map->buckets_, i);
 		if (!bucket->psl) {
 			return NULL;
 		}
-		if (bucket->hash == hash && map->compare_cb_(map, ele, hashmap_bucket_data_(bucket), map->user_data) == 0) {
-			memcpy(map->temp_data_, hashmap_bucket_data_(bucket), map->ele_size);
+		if (bucket->hash == hash && map->compare_cb_(map, ele_ptr, bucket_data_(bucket), map->user_data) == 0) {
+			memcpy(map->temp_data_, bucket_data_(bucket), map->ele_size);
 			bucket->psl = 0;
 			for (;;) {
-				_bucket_t *prev = bucket;
-				i               = hashmap_next_probe_sequence_(map, i, ele);
-				bucket          = hashmap_bucket_at_(map, map->buckets_, i);
+				prev   = bucket;
+				i      = next_probe_sequence_(map, i, ele_ptr);
+				bucket = bucket_at_(map, map->buckets_, i);
 				if (bucket->psl <= 1) {
 					prev->psl = 0;
 					break;
@@ -451,75 +467,97 @@ void *hashmap_delete(hashmap_t *map, void *ele)
 				prev->psl--;
 			}
 			map->buckets_used--;
-			if (map->buckets_used <= map->shrink_at_)
+			if (shrink && map->buckets_used <= map->shrink_at_)
 				hashmap_resize(map, map->buckets_capacity / 2);
 			return map->temp_data_;
 		}
-		i = hashmap_next_probe_sequence_(map, i, ele);
+		i = next_probe_sequence_(map, i, ele_ptr);
 	}
 }
 
-/**
- * @brief find the bucket in the hashmap and return it, will not free any resources
- * @param map
- * @param ele require this as the key to search the specific element
- * @return
- */
-void *hashmap_retrieve(hashmap_t *map, void *ele)
+void *opus_hashmap_delete(opus_hashmap *map, void *ele_ptr)
 {
-	uint64_t i, hash;
-	if (ele == NULL) return NULL;
+	return remove_(map, ele_ptr, 1);
+}
 
-	hash = hashmap_get_hash_(map, ele);
-	i    = hashmap_bucket_idx_(map, hash);
+void *opus_hashmap_remove(opus_hashmap *map, void *ele_ptr)
+{
+	return remove_(map, ele_ptr, 0);
+}
+
+/**
+ * @brief find the bucket in the hashmap and return it, will not OPUS_FREE any resources
+ * @param map
+ * @param ele_ptr require this as the key to search the specific element
+ * @return pointer of the element
+ */
+void *opus_hashmap_retrieve(opus_hashmap *map, void *ele_ptr)
+{
+	uint64_t  i, hash;
+	bucket__ *bucket;
+	void    **bucket_data;
+
+	if (ele_ptr == NULL) return NULL;
+
+	hash = get_hash_(map, ele_ptr);
+	i    = bucket_idx_(map, hash);
 	for (;;) {
-		_bucket_t *bucket = hashmap_bucket_at_(map, map->buckets_, i);
+		bucket = bucket_at_(map, map->buckets_, i);
 		if (!bucket->psl) { /* meet tombstone? */
 			/* no need to continue search */
 			return NULL;
 		}
 		/* check if the element in this bucket is the one we want */
-		if (bucket->hash == hash && map->compare_cb_(map, ele, hashmap_bucket_data_(bucket), map->user_data) == 0)
-			return hashmap_bucket_data_(bucket);
+		bucket_data = bucket_data_(bucket);
+		if (bucket->hash == hash &&
+		    map->compare_cb_(map, ele_ptr, bucket_data, map->user_data) == 0)
+			return bucket_data;
 
-		i = hashmap_next_probe_sequence_(map, i, bucket);
+		i = next_probe_sequence_(map, i, bucket);
 	}
 }
 
-void hashmap_dump(hashmap_t *map, FILE *fp, hashmap_print_data_cb print_data)
+void opus_hashmap_dump(opus_hashmap *map, FILE *fp, opus_hashmap_print_data_cb print_data)
 {
-	uint64_t i;
-	char     text[1024];
+	uint64_t  i;
+	char      text[1024];
+	bucket__ *bucket;
 
 	if (!fp || map->buckets_ == NULL) return;
 
-	fprintf(fp, "CAPACITY %" PRIu64 ", ELE_SIZE %" PRIu64 ", BUCKET_SIZE %" PRIu64 "\n", map->buckets_capacity, map->ele_size, map->bucket_size);
+	fprintf(fp, "CAPACITY %" PRIu64 ", ELE_SIZE %" PRIu64 ", BUCKET_SIZE %" PRIu64 "\n",
+	        map->buckets_capacity, map->ele_size, map->bucket_size);
 	fprintf(fp, "USER_DATA 0x%p\n", map->user_data);
 	fprintf(fp, "%6s\t%16s\tDATA\n", "psl", "HASH");
 	for (i = 0; i < map->buckets_capacity; i++) {
-		_bucket_t *bucket  = hashmap_bucket_at_(map, map->buckets_, i);
+		bucket = bucket_at_(map, map->buckets_, i);
 
-		if (bucket->psl) print_data(hashmap_bucket_data_(bucket), text, 1024);
+		if (bucket->psl) print_data(bucket_data_(bucket), text, 1024);
 		else
 			text[0] = '\0';
-		fprintf(fp, "%6u\t%16"PRIu64"\t%s\n", bucket->psl, bucket->hash, text);
+		fprintf(fp, "%6u\t%16" PRIu64 "\t%s\n", bucket->psl, bucket->hash, text);
 	}
 }
 
-void *hashmap_probe(hashmap_t *hashmap, uint64_t index)
+void *opus_hashmap_probe(opus_hashmap *hashmap, uint64_t index)
 {
-	if (index > hashmap->buckets_capacity) return NULL;
-	return hashmap_bucket_data_(hashmap_bucket_at_(hashmap, hashmap->buckets_, index));
+	bucket__ *bucket;
+	OPUS_RETURN_IF(NULL, index > hashmap->buckets_capacity);
+	bucket = bucket_at_(hashmap, hashmap->buckets_, index);
+	OPUS_RETURN_IF(NULL, !bucket->psl);
+	return bucket_data_(bucket);
 }
 
-void hashmap_get_bucket_info(hashmap_t *hashmap, uint64_t index, unsigned int *psl, void **ele)
+void opus_hashmap_get_bucket_info(opus_hashmap *hashmap, uint64_t index, unsigned int *psl, void **ele)
 {
+	bucket__ *bucket;
+
 	if (index > hashmap->buckets_capacity) {
 		*psl = 0;
 		*ele = NULL;
 	} else {
-		struct _bucket *bucket = hashmap_bucket_at_(hashmap, hashmap->buckets_, index);
-		*ele                   = hashmap_bucket_data_(bucket);
-		*psl                   = bucket->psl;
+		bucket = bucket_at_(hashmap, hashmap->buckets_, index);
+		*ele   = bucket_data_(bucket);
+		*psl   = bucket->psl;
 	}
 }

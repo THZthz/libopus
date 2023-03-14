@@ -38,6 +38,6 @@ int main(int argc, char *argv[])
 
 	printf("\n};\n");
 
-	free(b);
+	OPUS_FREE(b);
 	return 0;
 }

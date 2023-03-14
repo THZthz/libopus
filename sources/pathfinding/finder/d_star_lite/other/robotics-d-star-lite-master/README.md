@@ -40,7 +40,7 @@ Usage
 
 ### Maps
 
-The "maps" used for this project are grayscale caches.  The darker the pixel the more it costs to traverse it.  Black pixels (RGB 0 0 0) are considered "unwalkable" while white pixels (RGB 255 255 255) cost "1".  Pixel colors in between vary in value.
+The "maps" used for this project are grayscale caches.  The darker the pixel the more it costs to destroy_leaves_ it.  Black pixels (RGB 0 0 0) are considered "unwalkable" while white pixels (RGB 255 255 255) cost "1".  Pixel colors in between vary in value.
 
 ### Execution
 

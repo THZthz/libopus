@@ -25,7 +25,7 @@ opus_polygon *opus_shape_polygon_init(opus_polygon *polygon, opus_vec2 *vertices
 	opus_vec2 t;
 
 	if (polygon) {
-		polygon->_.type_  = PHYSICS_SHAPE_POLYGON;
+		polygon->_.type_  = OPUS_SHAPE_POLYGON;
 		polygon->center   = center;
 		polygon->n        = n;
 		polygon->vertices = malloc(sizeof(opus_vec2) * n);
@@ -35,9 +35,10 @@ opus_polygon *opus_shape_polygon_init(opus_polygon *polygon, opus_vec2 *vertices
 		}
 		memcpy(polygon->vertices, vertices, sizeof(opus_vec2) * n);
 
-		polygon->_.get_support = opus_shape_polygon_get_support;
-		polygon->_.get_inertia = opus_shape_polygon_get_inertia;
+		polygon->_.get_support  = opus_shape_polygon_get_support;
+		polygon->_.get_inertia  = opus_shape_polygon_get_inertia;
 		polygon->_.update_bound = opus_shape_polygon_update_bound;
+		polygon->_.get_area     = opus_shape_polygon_get_area;
 
 		/* in case the center of the polygon is not the same as that given by user */
 		opus_make_ccw(polygon->vertices, polygon->n);
@@ -74,18 +75,18 @@ void opus_shape_polygon_destroy(opus_polygon *polygon)
  * @return
  */
 opus_vec2 opus_shape_polygon_get_support(opus_shape *shape, opus_mat2d transform, opus_vec2 dir,
-                                       size_t *index)
+                                         size_t *index)
 {
 	opus_polygon *polygon = (void *) shape;
 
-	size_t n        = polygon->n;
+	size_t     n        = polygon->n;
 	opus_vec2 *vertices = polygon->vertices, p;
 
-	size_t i, max_i = 0;
+	size_t    i, max_i = 0;
 	opus_real max = -OPUS_REAL_MAX, dot;
 
 	for (i = 0; i < n; i++) {
-		p = opus_mat2d_pre_mul_vec(transform, vertices[i]);
+		p   = opus_mat2d_pre_mul_vec(transform, vertices[i]);
 		dot = opus_vec2_dot(p, dir);
 		if (dot > max) {
 			max   = dot;
@@ -109,8 +110,8 @@ void opus_shape_polygon_update_bound(opus_shape *shape, opus_real rotation, opus
 	opus_polygon *polygon = (void *) shape;
 
 	opus_mat2d transform;
-	size_t i;
-	opus_real  x , y;
+	size_t     i;
+	opus_real  x, y;
 	opus_real  min_x = OPUS_REAL_MAX, min_y = OPUS_REAL_MAX, max_x = -OPUS_REAL_MAX, max_y = -OPUS_REAL_MAX;
 
 	opus_mat2d_rotate_about(transform, (float) rotation, position);
@@ -131,4 +132,10 @@ void opus_shape_polygon_update_bound(opus_shape *shape, opus_real rotation, opus
 	shape->bound.min.y = min_y;
 	shape->bound.max.x = max_x;
 	shape->bound.max.y = max_y;
+}
+
+opus_real opus_shape_polygon_get_area(opus_shape *shape)
+{
+	opus_polygon *polygon = (void *) shape;
+	return opus_area(polygon->vertices, polygon->n, 0);
 }

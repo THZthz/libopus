@@ -15,8 +15,8 @@
 #include <time.h>
 
 #include "vg/vg_color.h"
-#include "vg/vg_engine.h"
-#include "vg/vg_input.h"
+#include "engine/engine.h"
+#include "engine/input.h"
 #include "vg/vg_gl.h"
 #include "vg/vg_utils.h"
 #include "vg/pluto/plutovg-private.h"
@@ -27,11 +27,11 @@
 #include "math/polygon/delaunay.h"
 #include "external/sokol_time.h"
 
-vg_engine_t     *g_engine  = NULL;
-vg_input_t      *g_input   = NULL;
-vg_gl_program_t *g_program = NULL;
-vg_gl_font_t    *g_font    = NULL;
-vg_gl_program_t *g_pl_r    = NULL;
+opus_engine     *g_engine  = NULL;
+opus_input      *g_input   = NULL;
+opus_gl_program *g_program = NULL;
+opus_font       *g_font    = NULL;
+opus_gl_program *g_pl_r    = NULL;
 
 plutovg_surface_t *g_pl_s = NULL;
 plutovg_t         *g_pl   = NULL;
@@ -43,14 +43,14 @@ struct paras {
 	int s;
 } paras = {0};
 
-void on_pointer_down(vg_input_t *input)
+void on_pointer_down(opus_input *input)
 {
 	if (paras.n == 400) return;
 	opus_vec2_copy(paras.points[paras.n], input->pointer);
 	paras.n++;
 }
 
-void on_key_down(vg_input_t *input)
+void on_key_down(opus_input *input)
 {
 	if (input->keys_state[GLFW_KEY_SPACE]) {
 		size_t i;
@@ -62,7 +62,7 @@ void on_key_down(vg_input_t *input)
 	}
 }
 
-void preload(vg_engine_t *engine)
+void preload(opus_engine *engine)
 {
 	plutovg_font_t *font;
 	font   = plutovg_font_load_from_file("../assets/fonts/georgiaz.ttf", 20);
@@ -72,7 +72,7 @@ void preload(vg_engine_t *engine)
 	plutovg_set_font(g_pl, font);
 }
 
-void update(vg_engine_t *engine, opus_real delta)
+void update(opus_engine *engine, opus_real delta)
 {
 }
 
@@ -123,7 +123,7 @@ static void delaunay_test()
 
 	if (paras.n > 3) {
 		opus_delaunay_data data = {0};
-		opus_real      *flat = malloc(sizeof(opus_real) * paras.n * 2);
+		opus_real      *flat = OPUS_MALLOC(sizeof(opus_real) * paras.n * 2);
 		uint32_t        e;
 
 		/* flatten the points array */
@@ -198,18 +198,18 @@ static void gpc_test()
 		size_t i;
 		for (i = 0; i < p3.num_contours; i++) {
 			plutovg_set_source_rgb(g_pl, r_random_01(), r_random_01(), r_random_01());
-			vg_pl_path(g_pl, (opus_vec2 *) p3.contour[i].vertex, p3.contour[i].num_vertices);
+			opus_pl_path(g_pl, (opus_vec2 *) p3.contour[i].vertex, p3.contour[i].num_vertices);
 			plutovg_close_path(g_pl);
 			plutovg_stroke(g_pl);
 		}
 	} else {
 		plutovg_set_source_rgb(g_pl, COLOR_BLUE);
-		vg_pl_path(g_pl, (opus_vec2 *) p1.contour[0].vertex, p1.contour[0].num_vertices);
+		opus_pl_path(g_pl, (opus_vec2 *) p1.contour[0].vertex, p1.contour[0].num_vertices);
 		plutovg_close_path(g_pl);
 		plutovg_stroke(g_pl);
 
 		plutovg_set_source_rgb(g_pl, COLOR_GREEN);
-		vg_pl_path(g_pl, (opus_vec2 *) p2.contour[0].vertex, p2.contour[0].num_vertices);
+		opus_pl_path(g_pl, (opus_vec2 *) p2.contour[0].vertex, p2.contour[0].num_vertices);
 		plutovg_close_path(g_pl);
 		plutovg_stroke(g_pl);
 	}
@@ -268,7 +268,7 @@ static void tessellate_polygon_test()
 	triangles = opus_tessellate(&coords, holes);
 	e         = stm_ms(stm_now());
 
-	vg_pl_path(g_pl, coords, 16);
+	opus_pl_path(g_pl, coords, 16);
 	plutovg_close_path(g_pl);
 	plutovg_stroke(g_pl);
 
@@ -313,7 +313,7 @@ static void tessellate_polygon_test()
 	opus_arr_destroy(holes);
 }
 
-void render(vg_engine_t *engine)
+void render(opus_engine *engine)
 {
 	glClearColor(COLOR_WHITE, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
@@ -329,7 +329,7 @@ void render(vg_engine_t *engine)
 	g_pl_r->use(g_pl_r, g_pl_s->data, g_pl_s->width, g_pl_s->height);
 }
 
-void cleanup(vg_engine_t *engine)
+void cleanup(opus_engine *engine)
 {
 	plutovg_surface_destroy(g_pl_s);
 	plutovg_destroy(g_pl);
@@ -340,10 +340,10 @@ int main()
 {
 	if (1) {
 		/* engine to create glfw window and a combined "vg_t" instance */
-		g_engine = vg_engine_create(800, 800, "vg");
+		g_engine = opus_engine_create(800, 800, "vg");
 
 		/* handle glfw window input */
-		g_input = vg_input_init(g_engine);
+		g_input = opus_input_init(g_engine);
 
 		/* specially designed to draw [double, double, ...] like path(tessellate to triangle and draw with opengl) */
 		g_program = vg_gl_program_preset1();
@@ -351,16 +351,16 @@ int main()
 		/* specially designed to render pluto_vg surface buffer */
 		g_pl_r = vg_gl_program_preset2();
 
-		vg_engine_set(g_engine, preload, update, render, cleanup);
-		vg_input_on(g_input->on_pointer_down, on_pointer_down);
-		vg_input_on(g_input->on_key_down, on_key_down);
-		vg_engine_start(g_engine); /* start engine main loop */
+		opus_engine_set_callback(g_engine, preload, update, render, cleanup);
+		opus_input_on(g_input->on_pointer_down, on_pointer_down);
+		opus_input_on(g_input->on_key_down, on_key_down);
+		opus_engine_start(g_engine); /* start engine main loop */
 
 		/* release resources */
 		vg_gl_program_destroy(g_program);
 		vg_gl_program_destroy(g_pl_r);
-		vg_engine_destroy(g_engine);
-		vg_input_done();
+		opus_engine_destroy(g_engine);
+		opus_input_done();
 	} else {
 		/* tessellation data test do not mind */
 		opus_vec2 p1_points[16] = {

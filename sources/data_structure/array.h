@@ -110,7 +110,7 @@ typedef struct opus_arr_head {
 #define opus_arr_destroy(_arr)         \
 	do {                               \
 		if (!(_arr)) break;            \
-		free(opus_arr_get_head(_arr)); \
+		OPUS_FREE_R(opus_arr_get_head(_arr)); \
 		(_arr) = NULL;                 \
 	} while (0)
 

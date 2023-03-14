@@ -13,31 +13,31 @@ static void event_namespace_dump_table_(const void *ele, char *text, uint64_t n)
 	sprintf(text, "%s", ((event_namespace_t *) ele)->name);
 }
 
-static void dump(hashmap_t *map, hashmap_print_data_cb cb)
+static void dump(opus_hashmap *map, opus_hashmap_print_data_cb cb)
 {
-	hashmap_dump(map, stdout, cb);
+	opus_hashmap_dump(map, stdout, cb);
 }
 
-static int event_compare_(hashmap_t *map, const void *a, const void *b, void *user_data)
+static int event_compare_(opus_hashmap *map, const void *a, const void *b, void *user_data)
 {
 	const event_t *ea = a, *eb = b;
 	return strcmp(ea->name, eb->name);
 }
 
-static uint64_t event_hash_(hashmap_t *map, const void *ele, uint64_t seed0, uint64_t seed1, void *user_data)
+static uint64_t event_hash_(opus_hashmap *map, const void *ele, uint64_t seed0, uint64_t seed1, void *user_data)
 {
 	const event_namespace_t *e = ele;
-	return hashmap_murmur(e->name, strlen(e->name), seed0, seed1);
+	return opus_hashmap_murmur(e->name, strlen(e->name), seed0, seed1);
 }
 
-static void event_free_(hashmap_t *map, const void *ele, void *user_data)
+static void event_free_(opus_hashmap *map, const void *ele, void *user_data)
 {
 }
 
 static event_namespace_t *event_namespace_init_(event_namespace_t *namespace, const char *name)
 {
 	if (namespace == NULL) return NULL;
-	namespace->table = hashmap_create(sizeof(event_t), 0, 0, 0, event_compare_, event_hash_, event_free_);
+	namespace->table = opus_hashmap_create(sizeof(event_t), 0, 0, 0, event_compare_, event_hash_, event_free_);
 
 	namespace->context    = NULL;
 	namespace->identifier = EVENT_IS_NAMESPACE;
@@ -47,7 +47,7 @@ static event_namespace_t *event_namespace_init_(event_namespace_t *namespace, co
 
 static event_namespace_t *event_namespace_create_(const char *name)
 {
-	event_namespace_t *namespace = (event_namespace_t *) malloc(sizeof(event_namespace_t));
+	event_namespace_t *namespace = (event_namespace_t *) OPUS_MALLOC(sizeof(event_namespace_t));
 	namespace                    = event_namespace_init_(namespace, name);
 	return namespace;
 }
@@ -65,7 +65,7 @@ static int event_namespace_done_(event_namespace_t *namespace)
 		for (i = 0; done < buckets_used && i < buckets_capacity; i++) {
 			unsigned int       psl;
 			event_namespace_t *ele;
-			hashmap_get_bucket_info(namespace->table, i, &psl, (void **) &ele);
+			opus_hashmap_get_bucket_info(namespace->table, i, &psl, (void **) &ele);
 			if (psl != 0) {
 				if (ele != NULL) {
 					if (ele->identifier == EVENT_IS_NAMESPACE)
@@ -77,7 +77,7 @@ static int event_namespace_done_(event_namespace_t *namespace)
 			}
 		}
 	}
-	hashmap_destroy(namespace->table);
+	opus_hashmap_destroy(namespace->table);
 	return 0;
 }
 
@@ -85,13 +85,13 @@ static void event_namespace_destroy_(event_namespace_t *namespace)
 {
 	OPUS_NOT_NULL(namespace);
 	event_namespace_done_(namespace);
-	free(namespace);
+	OPUS_FREE(namespace);
 }
 
 static event_namespace_t *event_namespace_search_(event_namespace_t *namespace, const char *name)
 {
 	char              *token;
-	char              *name_cp = (char *) malloc(sizeof(char) * (strlen(name) + 1));
+	char              *name_cp = (char *) OPUS_MALLOC(sizeof(char) * (strlen(name) + 1));
 	event_namespace_t *res     = NULL;
 	memcpy(name_cp, name, sizeof(char) * (strlen(name) + 1));
 
@@ -100,7 +100,7 @@ static event_namespace_t *event_namespace_search_(event_namespace_t *namespace, 
 	while (token != NULL) {
 		event_namespace_t key, *res_namespace;
 		strcpy(key.name, token);
-		res_namespace = hashmap_retrieve(namespace->table, &key);
+		res_namespace = opus_hashmap_retrieve(namespace->table, &key);
 		if (res_namespace == NULL) break;
 		if (res_namespace->identifier != EVENT_IS_NAMESPACE) {
 			res = res_namespace;
@@ -111,7 +111,7 @@ static event_namespace_t *event_namespace_search_(event_namespace_t *namespace, 
 		token = strtok(NULL, event_namespace_splitter);
 	}
 
-	free(name_cp);
+	OPUS_FREE(name_cp);
 	return res;
 }
 
@@ -163,22 +163,22 @@ int event_hub_on(event_hub_t *hub, const char *name, event_t *event)
 	while (token != NULL) {
 		char *next_token;
 		strcpy(key.name, token);
-		next       = hashmap_retrieve(cur->table, &key);
+		next       = opus_hashmap_retrieve(cur->table, &key);
 		next_token = strtok(NULL, event_namespace_splitter);
 		if (next == NULL) {
 			/* add a new namespace and continue process */
 			event_namespace_init_(&key, token);
-			hashmap_insert(cur->table, &key);
+			opus_hashmap_insert(cur->table, &key);
 			if (next_token == NULL) {
 				/* we reach the name of the event, however the event does not exist */
 				/* so create a new event */
-				event_t *temp        = (event_t *) malloc(sizeof(event_t));
+				event_t *temp        = (event_t *) OPUS_MALLOC(sizeof(event_t));
 				key.table->user_data = temp;
 				memcpy(temp, event, sizeof(event_t));
 				memcpy(temp->name, token, sizeof(char) * EVENT_NAME_SIZE);
 				break;
 			}
-			cur = hashmap_retrieve(cur->table, &key);
+			cur = opus_hashmap_retrieve(cur->table, &key);
 		} else {
 			if (next_token == NULL) {
 				if (next->table->user_data != NULL) {
@@ -186,7 +186,7 @@ int event_hub_on(event_hub_t *hub, const char *name, event_t *event)
 					opus_arr_concat(e->callback_list, event->callback_list);
 					opus_arr_destroy(event->callback_list);
 				} else {
-					event_t *temp          = (event_t *) malloc(sizeof(event_t));
+					event_t *temp          = (event_t *) OPUS_MALLOC(sizeof(event_t));
 					next->table->user_data = temp;
 					memcpy(temp, event, sizeof(event_t));
 					memcpy(temp->name, token, sizeof(char) * EVENT_NAME_SIZE);
@@ -198,7 +198,7 @@ int event_hub_on(event_hub_t *hub, const char *name, event_t *event)
 		}
 		token = next_token;
 	}
-	free(event);
+	OPUS_FREE(event);
 	return 0;
 }
 
@@ -261,7 +261,7 @@ static int event_hub_foreach_events_by_name(event_hub_t *hub, const char *event_
 						for (i = 0; j > 0 && i < cur->table->buckets_capacity; i++) {
 							unsigned int       psl;
 							event_namespace_t *ele;
-							hashmap_get_bucket_info(cur->table, i, &psl, (void **) &ele);
+							opus_hashmap_get_bucket_info(cur->table, i, &psl, (void **) &ele);
 							if (psl > 0) {
 								j--;
 								if (event_hub_foreach_events_by_name(ele, event + (name - names), callback, args, 1) == EVENT_INTERRUPT) return EVENT_INTERRUPT;
@@ -290,7 +290,7 @@ static int event_hub_foreach_events_by_name(event_hub_t *hub, const char *event_
 				if (is_name_match) {
 					event_namespace_t *res, key;
 					strcpy(key.name, next_name);
-					res = hashmap_retrieve(cur->table, &key);
+					res = opus_hashmap_retrieve(cur->table, &key);
 					if (res != NULL) {
 						cur           = res;
 						is_name_match = -1; /* do not check again */
@@ -368,14 +368,14 @@ int event_hub_remove_callback_from_event_by_name(event_hub_t *hub, const char *n
  */
 event_t *event_create(event_cb *callback_list, int len, int times, void *context)
 {
-	event_t *event = (event_t *) malloc(sizeof(event_t));
+	event_t *event = (event_t *) OPUS_MALLOC(sizeof(event_t));
 	if (event == NULL) return NULL;
 
 	opus_arr_create(event->callback_list, sizeof(event_cb *));
 
 	/* no space for callback list, no need to create this event */
 	if (event->callback_list == NULL) {
-		free(event);
+		OPUS_FREE(event);
 		return NULL;
 	} else {
 		int i;
@@ -393,5 +393,5 @@ event_t *event_create(event_cb *callback_list, int len, int times, void *context
 void event_destroy(event_t *event)
 {
 	opus_arr_destroy(event->callback_list);
-	free(event);
+	OPUS_FREE(event);
 }

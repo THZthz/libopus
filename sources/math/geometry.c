@@ -86,13 +86,13 @@ void opus_aabb_init(opus_aabb *aabb, opus_real min_x, opus_real min_y, opus_real
 
 opus_aabb *opus_aabb_create(opus_real min_x, opus_real min_y, opus_real max_x, opus_real max_y)
 {
-	opus_aabb *aabb = (opus_aabb *) malloc(sizeof(opus_aabb));
+	opus_aabb *aabb = (opus_aabb *) OPUS_MALLOC(sizeof(opus_aabb));
 	opus_aabb_init(aabb, min_x, min_y, max_x, max_y);
 
 	return aabb;
 }
 
-void opus_aabb_destroy(opus_aabb *aabb) { free(aabb); }
+void opus_aabb_destroy(opus_aabb *aabb) { OPUS_FREE(aabb); }
 
 /**
  * translate the AABB box

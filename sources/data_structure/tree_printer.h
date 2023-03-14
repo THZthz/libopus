@@ -9,26 +9,23 @@ extern "C" {
 
 #define TREE_PRINTER_MAX_VAL_LEN 64
 
-typedef void *(*tree_printer_GET_LEFT_CHILD)(void *cur);
-typedef void *(*tree_printer_GET_RIGHT_CHILD)(void *cur);
-typedef void (*tree_printer_VAL2TEXT)(char *text, void *cur);
+typedef void *(*opus_tree_printer_get_left_child_cb)(void *cur);
+typedef void *(*opus_tree_printer_get_right_child_cb)(void *cur);
+typedef void (*opus_tree_printer_val2text_cb)(char *text, void *cur);
 
 typedef struct {
-	void                        *cur;
-	void                        *tree;
-	tree_printer_GET_LEFT_CHILD  get_left;
-	tree_printer_GET_RIGHT_CHILD get_right;
-	tree_printer_VAL2TEXT        val2text;
-} tree_printer_context_t;
+	void *cur;
+	void *tree;
 
-extern tree_printer_GET_LEFT_CHILD  tree_printer_get_left_child;
-extern tree_printer_GET_RIGHT_CHILD tree_printer_get_right_child;
-extern tree_printer_VAL2TEXT        tree_printer_val2text;
+	opus_tree_printer_get_left_child_cb get_left;
+	opus_tree_printer_get_right_child_cb get_right;
+	opus_tree_printer_val2text_cb        val2text;
+} opus_tree_printer_context;
 
 /**
  * start to print the \b binary \b tree
  */
-void tree_printer(tree_printer_context_t *t);
+void opus_tree_printer(opus_tree_printer_context *t);
 
 #ifdef __cplusplus
 };

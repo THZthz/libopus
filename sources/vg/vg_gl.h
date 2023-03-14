@@ -25,24 +25,24 @@ extern "C" {
 
 #define VG_GL_MAX_FONT_GLYPHS (256)
 
-typedef struct vg_gl_program vg_gl_program_t;
-typedef struct vg_gl_font    vg_gl_font_t;
-typedef void (*vg_gl_program_init_cb)(vg_gl_program_t *program);
-typedef void (*vg_gl_program_use_cb)(vg_gl_program_t *program, ...);
-typedef void (*vg_gl_program_done_cb)(vg_gl_program_t *program);
+typedef struct opus_gl_program opus_gl_program;
+typedef struct opus_font       opus_font;
+typedef void (*opus_gl_program_init_cb)(opus_gl_program *program);
+typedef void (*opus_gl_program_use_cb)(opus_gl_program *program, ...);
+typedef void (*opus_gl_program_done_cb)(opus_gl_program *program);
 
-struct vg_gl_program {
+struct opus_gl_program {
 	GLuint program;
 	GLuint vao, vbo;
 
 	void *context_;
 
-	vg_gl_program_init_cb init;
-	vg_gl_program_use_cb  use;
-	vg_gl_program_done_cb done;
+	opus_gl_program_init_cb init;
+	opus_gl_program_use_cb  use;
+	opus_gl_program_done_cb done;
 };
 
-struct vg_gl_font {
+struct opus_font {
 	unsigned char *font_file;
 	stbtt_fontinfo info;
 
@@ -61,26 +61,26 @@ int    vg_gl_check_program_error(GLuint program);
 GLuint vg_gl_create_program(const char *vertex_shader_source, const char *fragment_shader_source);
 GLuint vg_gl_create_program_v(const char *vertex_shader_path, const char *fragment_shader_path);
 
-vg_gl_program_t *vg_gl_program_create(vg_gl_program_init_cb init, vg_gl_program_use_cb use, vg_gl_program_done_cb done);
-void             vg_gl_program_destroy(vg_gl_program_t *program);
+opus_gl_program *vg_gl_program_create(opus_gl_program_init_cb init, opus_gl_program_use_cb use, opus_gl_program_done_cb done);
+void             vg_gl_program_destroy(opus_gl_program *program);
 
-vg_gl_program_t *vg_gl_program_preset1();
-vg_gl_program_t *vg_gl_program_preset2();
+opus_gl_program *vg_gl_program_preset1(void);
+opus_gl_program *vg_gl_program_preset2(void);
 
-void vg_gl_p1_render_fill(vg_gl_program_t *program, opus_vg *vg, double r, double g, double b, double a);
-void vg_gl_p1_render_stroke(vg_gl_program_t *program, opus_vg *vg, double r, double g, double b, double a);
+void vg_gl_p1_render_fill(opus_gl_program *program, opus_vg *vg, double r, double g, double b, double a);
+void vg_gl_p1_render_stroke(opus_gl_program *program, opus_vg *vg, double r, double g, double b, double a);
 
-vg_gl_font_t *vg_gl_font_create(const char *font_file_path);
-void          vg_gl_font_destroy(vg_gl_font_t *font);
+opus_font    *vg_gl_font_create(const char *font_file_path);
+void          vg_gl_font_destroy(opus_font *font);
 
-void vg_gl_font_set_size(vg_gl_font_t *font, float size);
-void vg_gl_font_set_bound(vg_gl_font_t *font, opus_real w, opus_real h);
-void vg_gl_font_set_line_space(vg_gl_font_t *font, opus_real ratio);
-void vg_gl_font_measure_text(vg_gl_font_t *font, const char *words, size_t n, opus_real *ex_x,
+void vg_gl_font_set_size(opus_font *font, float size);
+void vg_gl_font_set_bound(opus_font *font, opus_real w, opus_real h);
+void vg_gl_font_set_line_space(opus_font *font, opus_real ratio);
+void vg_gl_font_measure_text(opus_font *font, const char *words, size_t n, opus_real *ex_x,
                              opus_real *ex_y);
-void vg_gl_font_generate_path(vg_gl_font_t *font, opus_vg *vg, const char *words, size_t n,
+void vg_gl_font_generate_path(opus_font *font, opus_vg *vg, const char *words, size_t n,
                               opus_real x, opus_real y);
-void vg_gl_font_fill(vg_gl_font_t *font, opus_vg *vg, vg_gl_program_t *program);
+void vg_gl_font_fill(opus_font *font, opus_vg *vg, opus_gl_program *program);
 
 #ifdef __cplusplus
 };

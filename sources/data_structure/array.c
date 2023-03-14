@@ -32,7 +32,7 @@ OPUS_INLINE void *opus_arr_reserve_(void *arr, uint64_t count)
 		/* always allocate spaces of the multiple of 2 */
 		while (h->len + count > h->cap) h->cap = h->cap == 0 ? 8 : 2 * h->cap;
 
-		h = (opus_arr_head *) realloc(h, sizeof(opus_arr_head) + h->ele_size * h->cap);
+		h = (opus_arr_head *) OPUS_REALLOC(h, sizeof(opus_arr_head) + h->ele_size * h->cap);
 		opus_arr_not_null(h);
 	}
 	return opus_arr_get_body(h); /* return the new data address in case it changes */

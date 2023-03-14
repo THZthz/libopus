@@ -17,6 +17,8 @@
 
 #include "pathfinding/graph.h"
 #include "pathfinding/pathfinder.h"
+#include "utils/utils.h"
+
 
 typedef struct context_floyd context_t;
 
@@ -57,19 +59,19 @@ static graph_status_t create_context(pathfinder_t *finder, void **args)
 	if (!finder->graph_) return GRAPH_FAIL;
 
 	if (!context) {
-		context = (context_t *) malloc(sizeof(context_t));
+		context = (context_t *) OPUS_MALLOC(sizeof(context_t));
 
 		if (!context) return GRAPH_NO_MEM;
 
 		context->size = finder->graph_->get_vertex_count(finder->graph_);
-		context->cost = (graph_weight_t *) malloc(sizeof(graph_weight_t) * context->size * context->size);
-		context->path = (uint32_t *) malloc(sizeof(uint32_t) * context->size * context->size);
+		context->cost = (graph_weight_t *) OPUS_MALLOC(sizeof(graph_weight_t) * context->size * context->size);
+		context->path = (uint32_t *) OPUS_MALLOC(sizeof(uint32_t) * context->size * context->size);
 
 		if (!context->cost || !context->path) {
 			finder->context_ = NULL;
-			if (context->cost) free(context->cost);
-			if (context->path) free(context->path);
-			free(context);
+			if (context->cost) OPUS_FREE(context->cost);
+			if (context->path) OPUS_FREE(context->path);
+			OPUS_FREE(context);
 
 			return GRAPH_NO_MEM;
 		}
@@ -88,9 +90,9 @@ static graph_status_t destroy_context(pathfinder_t *finder)
 	if (finder && finder->context_) {
 		context_t *context = finder->context_;
 		finder->context_   = NULL;
-		free(context->path);
-		free(context->cost);
-		free(context);
+		OPUS_FREE(context->path);
+		OPUS_FREE(context->cost);
+		OPUS_FREE(context);
 	}
 
 	return GRAPH_OK;
@@ -131,7 +133,7 @@ static graph_status_t get_path(pathfinder_t *finder, graph_id_t **res_path, grap
 #define CHECK_SPACE()                                                                 \
 	if (*res_count == capacity) {                                                     \
 		capacity *= 2;                                                                \
-		*res_path = (graph_id_t *) realloc(*res_path, capacity * sizeof(graph_id_t)); \
+		*res_path = (graph_id_t *) OPUS_REALLOC(*res_path, capacity * sizeof(graph_id_t)); \
                                                                                       \
 		if (!(*res_path)) return GRAPH_NO_MEM;                                        \
 	}
@@ -142,7 +144,7 @@ static graph_status_t get_path(pathfinder_t *finder, graph_id_t **res_path, grap
 	graph_count_t size = context->size, capacity = 10;
 
 	*res_count = 0;
-	*res_path  = (graph_id_t *) malloc(capacity * sizeof(graph_id_t));
+	*res_path  = (graph_id_t *) OPUS_MALLOC(capacity * sizeof(graph_id_t));
 	if (!(*res_path)) return GRAPH_NO_MEM;
 	while (context->path[i * size + j] != j) {
 		/* allocate enough space for path */
@@ -177,7 +179,7 @@ pathfinder_t *pathfinder_floyd_create(graph_t *graph)
 	        destroy_context,
 	        search,
 	        get_path};
-	pathfinder_t *finder = (pathfinder_t *) malloc(sizeof(pathfinder_t));
+	pathfinder_t *finder = (pathfinder_t *) OPUS_MALLOC(sizeof(pathfinder_t));
 
 	if (!finder) return NULL;
 
@@ -186,7 +188,7 @@ pathfinder_t *pathfinder_floyd_create(graph_t *graph)
 	finder->graph_   = graph;
 
 	if (finder->create_context_(finder, NULL)) {
-		free(finder);
+		OPUS_FREE(finder);
 		return NULL;
 	}
 

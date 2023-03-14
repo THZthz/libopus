@@ -11,25 +11,25 @@
  * @development_log
  *
  */
-#ifndef VG_INPUT_H
-#define VG_INPUT_H
+#ifndef INPUT_H
+#define INPUT_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
 
-#include "vg/vg_engine.h"
+#include "engine/engine.h"
 #include "data_structure/array.h"
 
-#define VG_ENGINE_KEYS_SIZE (348)
+#define OPUS_ENGINE_KEYS_SIZE (348)
 
-typedef struct vg_input vg_input_t;
-typedef void (*vg_input_cb)(vg_input_t *input);
+typedef struct opus_input opus_input;
+typedef void (*opus_input_cb)(opus_input *input);
 
-struct vg_input {
+struct opus_input {
 	void *context;
 
-	vg_engine_t *engine; /* TODO: should we use hashmap to handle the case when multiple windows
+	opus_engine *engine; /* TODO: should we use hashmap to handle the case when multiple windows
 	                        coexist? */
 
 	opus_vec2 pointer;
@@ -48,26 +48,26 @@ struct vg_input {
 	int mouse_right;
 
 	int  key_pressed;
-	char keys_state[VG_ENGINE_KEYS_SIZE];
+	char keys_state[OPUS_ENGINE_KEYS_SIZE];
 
-	vg_input_cb *on_pointer_down;
-	vg_input_cb *on_pointer_move;
-	vg_input_cb *on_pointer_up;
-	vg_input_cb *on_drag;
-	vg_input_cb *on_scroll;
-	vg_input_cb *on_key_press;
-	vg_input_cb *on_key_down;
-	vg_input_cb *on_key_up;
+	opus_input_cb *on_pointer_down;
+	opus_input_cb *on_pointer_move;
+	opus_input_cb *on_pointer_up;
+	opus_input_cb *on_drag;
+	opus_input_cb *on_scroll;
+	opus_input_cb *on_key_press;
+	opus_input_cb *on_key_down;
+	opus_input_cb *on_key_up;
 };
 
-vg_input_t *vg_input_init(vg_engine_t *engine);
-void        vg_input_done();
+opus_input *opus_input_init(opus_engine *engine);
+void        opus_input_done(void);
 
-void vg_input_on(vg_input_cb *callback, vg_input_cb cb);
-void vg_input_emit(vg_input_cb *callback);
+void opus_input_on(opus_input_cb *callback, opus_input_cb cb);
+void opus_input_emit(opus_input_cb *callback);
 
 #ifdef __cplusplus
 };
 #endif /* __cplusplus */
 
-#endif /* VG_INPUT_H */
+#endif /* INPUT_H */

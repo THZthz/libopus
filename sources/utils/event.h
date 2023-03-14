@@ -56,7 +56,7 @@ struct event {
 struct event_namespace {
 	char       name[EVENT_NAME_SIZE];
 	int        identifier;
-	hashmap_t *table;
+	opus_hashmap *table;
 	void      *context;
 };
 

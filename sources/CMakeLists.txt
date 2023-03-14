@@ -5,8 +5,9 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c90 -pedantic")
 add_library(opus
         # DATA
         data_structure/array.h data_structure/array.c
+#        data_structure/deprecated/avl.h data_structure/deprecated/avl.c
+#        data_structure/deprecated/avl_hash.h data_structure/deprecated/avl_hash.c
         data_structure/avl.h data_structure/avl.c
-        data_structure/avl_hash.h data_structure/avl_hash.c
         data_structure/hashmap.h data_structure/hashmap.c
         data_structure/heap.h data_structure/heap.c
         data_structure/matrix.h data_structure/matrix.c
@@ -43,25 +44,28 @@ add_library(opus
         physics/opus/collision/contact/contacts.c
         physics/opus/collision/contact/sleeping.c
         physics/opus/dynamics/body.c
+        physics/opus/dynamics/joint.c
+        physics/opus/dynamics/constraint.c
+        physics/opus/factory.c
         physics/opus/world.c
 
         # PATHFINDING
-        pathfinding/finder/d_star_lite/map.h pathfinding/finder/d_star_lite/map.c
-        pathfinding/finder/d_star_lite/d_star_lite.c
-        pathfinding/finder/a_star.c
-        pathfinding/finder/d_star.c
-        pathfinding/finder/flow_field.c
-        pathfinding/finder/floyd_warshall.c
-        pathfinding/graph/adjacency_list.c
-        pathfinding/graph/adjacency_multilist.c
-        pathfinding/graph/forward_star.c
-        pathfinding/graph/graph.c
-        pathfinding/graph/grid.c
-        pathfinding/graph/nav_mesh.c
-        pathfinding/graph/orthogonal_list.c
-        pathfinding/utils/utils.h
-        pathfinding/graph.h
-        pathfinding/pathfinder.h
+#        pathfinding/finder/d_star_lite/map.h pathfinding/finder/d_star_lite/map.c
+#        pathfinding/finder/d_star_lite/d_star_lite.c
+#        pathfinding/finder/a_star.c
+#        pathfinding/finder/d_star.c
+#        pathfinding/finder/flow_field.c
+#        pathfinding/finder/floyd_warshall.c
+#        pathfinding/graph/adjacency_list.c
+#        pathfinding/graph/adjacency_multilist.c
+#        pathfinding/graph/forward_star.c
+#        pathfinding/graph/graph.c
+#        pathfinding/graph/grid.c
+#        pathfinding/graph/nav_mesh.c
+#        pathfinding/graph/orthogonal_list.c
+#        pathfinding/utils/utils.h
+#        pathfinding/graph.h
+#        pathfinding/pathfinder.h
 
         # BRAIN
         brain/ann.h brain/ann.c
@@ -95,20 +99,17 @@ add_library(opus
         vg/vg_color.h vg/vg_color.c
         vg/vg.h vg/vg.c
         vg/vg_gl.h vg/vg_gl.c
-        vg/vg_engine.h vg/vg_engine.c
-        vg/vg_input.h vg/vg_input.c
+        engine/engine.h engine/engine.c
+        engine/input.h engine/input.c
         vg/vg_utils.h vg/vg_utils.c
         vg/vg_gui.h vg/vg_gui.c
         )
 set_target_properties(opus PROPERTIES LINKER_LANGUAGE C)
 target_include_directories(opus PUBLIC ./)
-#if (CORE_BUILDING_PLATFORM STREQUAL PLATFORM_EMSCRIPTEN)
-#    target_include_directories(opus PUBLIC sources/core/external/emscripten)
-#endif ()
+if (CORE_BUILDING_PLATFORM STREQUAL PLATFORM_EMSCRIPTEN)
+    target_include_directories(opus PUBLIC sources/external/emscripten)
+endif ()
 target_link_libraries(opus m)
-#if (NOT CORE_BUILDING_PLATFORM STREQUAL PLATFORM_EMSCRIPTEN)
-#    target_link_libraries(opus core_render)
-#endif ()
 
 add_subdirectory(vg/pluto)
 target_link_libraries(opus plutovg)
@@ -119,7 +120,7 @@ if (CORE_BUILDING_PLATFORM STREQUAL PLATFORM_WINDOWS)
 elseif (CORE_BUILDING_PLATFORM STREQUAL PLATFORM_LINUX)
     target_link_libraries(opus dl GL glfw)
 elseif (CORE_BUILDING_PLATFORM STREQUAL PLATFORM_EMSCRIPTEN)
-    #    target_link_libraries(core_render glfw)
+        target_link_libraries(opus glfw)
 else ()
     message(ERROR "platform ${CMAKE_SYSTEM_NAME} is not supported")
 endif ()

@@ -169,7 +169,7 @@ int opus_clamp_i(int num, int min, int max)
  * 	- lcrc [a, b]
  */
 
-int opus_rand() { return rand(); }
+int opus_rand(void) { return rand(); }
 
 int opus_rand_loro(int min, int max) { return opus_rand() % (max - min + 1) + min - 1; }
 
@@ -180,10 +180,10 @@ int opus_rand_lcro(int min, int max) { return opus_rand() % (max - min) + min; }
 int opus_rand_lcrc(int min, int max) { return opus_rand() % (max - min + 1) + min; }
 
 /* random number [0, 1] */
-opus_real opus_rand_01() { return opus_rand() / (double) RAND_MAX; }
+opus_real opus_rand_01(void) { return opus_rand() / (double) RAND_MAX; }
 
 /* random number in range [-1,1] */
-opus_real opus_rand_m11() { return 2.0 * opus_rand() / (double) RAND_MAX - 1.0; }
+opus_real opus_rand_m11(void) { return 2.0 * opus_rand() / (double) RAND_MAX - 1.0; }
 
 void opus_vec2_set(opus_vec2 *vec, opus_real x, opus_real y)
 {
@@ -395,6 +395,12 @@ opus_vec2 opus_vec2_rotate(opus_vec2 vec, opus_real rad)
 	return opus_vec2_(x * c - y * s, x * s + y * c);
 }
 
+opus_vec2 opus_vec2_rotateT(opus_vec2 vec, opus_real rad)
+{
+	opus_real x = vec.x, y = vec.y, c = opus_cos(rad), s = opus_sin(rad);
+	return opus_vec2_(x * c + y * s, x * s - y * c);
+}
+
 opus_vec2 opus_vec2_rotate_about(opus_vec2 vec, opus_vec2 point, opus_real rad)
 {
 	opus_vec2 res;
@@ -465,7 +471,7 @@ void opus_mat_fast_pow(opus_real *A, uint64_t n)
 
 	if (n > OPUS_MAX_STATIC_MATRIX_DIMENSION) {
 		flag = 1;
-		res  = (opus_real *) malloc(sizeof(opus_real) * n * n);
+		res  = (opus_real *) OPUS_MALLOC(sizeof(opus_real) * n * n);
 	}
 
 	opus_mat_identity(res, n, n);
@@ -478,7 +484,7 @@ void opus_mat_fast_pow(opus_real *A, uint64_t n)
 
 	memcpy(A, res, sizeof(opus_real) * n * n);
 
-	if (flag) free(res);
+	if (flag) OPUS_FREE(res);
 }
 
 /**

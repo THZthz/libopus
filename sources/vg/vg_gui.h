@@ -19,7 +19,7 @@ extern "C" {
 #endif /* __cplusplus */
 
 #include "vg/vg_gl.h"
-#include "vg/vg_input.h"
+#include "engine/input.h"
 #include "math/math.h"
 #include "math/geometry.h"
 
@@ -39,8 +39,8 @@ struct vg_gui_region {
 };
 
 struct vg_gui {
-	vg_input_t *input; /* input handler */
-	vg_gl_font_t *font;
+	opus_input *input; /* input handler */
+	opus_font  *font;
 
 	vg_gui_component_t *components;
 };
@@ -64,9 +64,9 @@ struct vg_gui_info_panel {
 	char *info;
 };
 
-vg_gui_t *vg_gui_create(vg_input_t *input);
+vg_gui_t *vg_gui_create(opus_input *input);
 void      vg_gui_destroy(vg_gui_t *gui);
-void vg_gui_render_components(vg_gui_t *gui, opus_vg *vg, vg_gl_program_t *program);
+void vg_gui_render_components(vg_gui_t *gui, opus_vg *vg, opus_gl_program *program);
 
 void vg_gui_add_info_panel(vg_gui_t *gui, opus_real x, opus_real y, opus_real w, opus_real h, const char *info);
 

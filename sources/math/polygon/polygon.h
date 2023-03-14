@@ -57,7 +57,7 @@ size_t *opus_tessellate(opus_vec2 **coords_ptr, opus_vec2 **holes);
 
 void       opus_center(opus_vec2 *coords, size_t n, opus_vec2 *out_center);
 void       opus_mean(opus_vec2 *coords, size_t n, opus_vec2 *out_mean);
-opus_real  polygon_area(opus_vec2 *coords, size_t n, int is_signed);
+opus_real  opus_area(opus_vec2 *coords, size_t n, int is_signed);
 opus_real  opus_inertia(opus_vec2 *coords, size_t n, opus_real mass);
 void       opus_translate(opus_vec2 *coords, size_t n, opus_vec2 t, opus_vec2 scalar);
 void       opus_rotate(opus_vec2 *coords, size_t n, opus_vec2 point, opus_real angle);

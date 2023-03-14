@@ -86,6 +86,7 @@ opus_vec2 opus_vec2_reflect(opus_vec2 vec, opus_vec2 axis);
 opus_vec2 opus_vec2_projectN(opus_vec2 vec, opus_vec2 axis);
 opus_vec2 opus_vec2_reflectN(opus_vec2 vec, opus_vec2 axis);
 opus_vec2 opus_vec2_rotate(opus_vec2 vec, opus_real rad);
+opus_vec2 opus_vec2_rotateT(opus_vec2 vec, opus_real rad);
 opus_vec2 opus_vec2_rotate_about(opus_vec2 vec, opus_vec2 point, opus_real rad);
 opus_vec2 opus_vec2_perp(opus_vec2 v);
 opus_vec2 opus_vec2_skewT(opus_vec2 v);
@@ -106,13 +107,13 @@ opus_real opus_clamp(opus_real num, opus_real min, opus_real max);
 int       opus_clamp_i(int num, int min, int max);
 
 unsigned  opus_xrand(void);
-int       opus_rand();
+int       opus_rand(void);
 int       opus_rand_loro(int min, int max);
 int       opus_rand_lorc(int min, int max);
 int       opus_rand_lcro(int min, int max);
 int       opus_rand_lcrc(int min, int max);
-opus_real opus_rand_01();
-opus_real opus_rand_m11();
+opus_real opus_rand_01(void);
+opus_real opus_rand_m11(void);
 
 opus_real opus_inv_sqrt(opus_real x, int iterations);
 opus_real opus_pow(opus_real x, opus_real n);

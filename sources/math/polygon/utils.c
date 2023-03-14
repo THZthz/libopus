@@ -169,22 +169,28 @@ void opus_scale_(void *vertices, size_t n, opus_vec2 origin, opus_vec2 scalar)
 	}
 }
 
-/* test if a set of vertices contains a point */
+/**
+ * @brief test if a set of vertices contains a point
+ * @param vertices CCW
+ * @param n
+ * @param point
+ * @return
+ */
 int opus_contains_(void *vertices, size_t n, opus_vec2 point)
 {
 	size_t i;
-	opus_vec2 *v = vec_n(vertices, n - 1), *v_next;
+	opus_vec2 *v ,*v_prev;
 
 	for (i = 0; i < n; i++) {
-		v_next = vec_n(vertices, i);
+		v = vec_n(vertices, i);
+		v_prev = vec_n(vertices, (n + i - 1) % n);
 
-		if ((point.x - v->x) * (v_next->y - v->y) + (point.y - v->y) * (v->x - v_next->x) > 0) {
+		if ((point.x - v->x) * (v_prev->y - v->y) + (point.y - v->y) * (v->x - v_prev->x) > 0) {
 			return 0;
 		}
 
-		v = v_next;
+		v = v_prev;
 	}
-
 	return 1;
 }
 
@@ -395,7 +401,7 @@ void opus_mean(opus_vec2 *coords, size_t n, opus_vec2 *out_mean)
 	opus_mean_(coords, n, out_mean);
 }
 
-opus_real polygon_area(opus_vec2 *coords, size_t n, int is_signed)
+opus_real opus_area(opus_vec2 *coords, size_t n, int is_signed)
 {
 	opus_set_polygon_offset(0, sizeof(opus_vec2));
 	return opus_area_(coords, n, is_signed);

@@ -28,7 +28,7 @@ static void set_region_(vg_gui_region_t *region, opus_real x, opus_real y, opus_
 	region->h = h;
 }
 
-vg_gui_t *vg_gui_create(vg_input_t *input)
+vg_gui_t *vg_gui_create(opus_input *input)
 {
 	char font_file_path[] = "../assets/fonts/VarelaRound-Regular.ttf";
 
@@ -53,7 +53,7 @@ vg_gui_t *vg_gui_create(vg_input_t *input)
  * @param vg
  * @param program preset1
  */
-void vg_gui_render_components(vg_gui_t *gui, opus_vg *vg, vg_gl_program_t *program)
+void vg_gui_render_components(vg_gui_t *gui, opus_vg *vg, opus_gl_program *program)
 {
 	size_t i;
 	for (i = 0; i < opus_arr_len(gui->components); i++) {

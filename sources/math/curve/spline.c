@@ -29,8 +29,8 @@ int opus_interpolate_b_spline(opus_real t, int degree, opus_vec2 *points, const 
 	opus_real   alpha;
 
 
-	weights_ = (opus_real *) malloc(n * sizeof(opus_real));
-	knots_   = (opus_real *) malloc((n + degree + 1) * sizeof(opus_real));
+	weights_ = (opus_real *) OPUS_MALLOC(n * sizeof(opus_real));
+	knots_   = (opus_real *) OPUS_MALLOC((n + degree + 1) * sizeof(opus_real));
 	if (weights_ == NULL || knots_ == NULL) return 1;
 
 	if (degree < 1) return 1;                                          /*  degree must be at least 1 (linear) */
@@ -64,7 +64,7 @@ int opus_interpolate_b_spline(opus_real t, int degree, opus_vec2 *points, const 
 	}
 
 	/*  convert points to homogeneous coordinates */
-	v = (opus_real **) malloc(sizeof(opus_real) * (n * (d + 1)));
+	v = (opus_real **) OPUS_MALLOC(sizeof(opus_real) * (n * (d + 1)));
 	if (v == NULL) return 1;
 	for (i = 0; i < n; i++) {
 		for (j = 0; j < d; j++) {
@@ -107,20 +107,20 @@ void opus_spline_init(opus_spline_t *spline, opus_real *x_list, opus_real *y_lis
 	size_t i;
 	opus_real *h, *A, *B, *c;
 
-	spline->x = (opus_real *) malloc(sizeof(opus_real) * n);
-	spline->y = (opus_real *) malloc(sizeof(opus_real) * n);
+	spline->x = (opus_real *) OPUS_MALLOC(sizeof(opus_real) * n);
+	spline->y = (opus_real *) OPUS_MALLOC(sizeof(opus_real) * n);
 	memcpy(spline->x, x_list, n * sizeof(opus_real));
 	memcpy(spline->y, y_list, n * sizeof(opus_real));
 	spline->n = n;
 	spline->n = n;
 
-	h = (opus_real *) malloc(sizeof(opus_real) * (n - 1));
+	h = (opus_real *) OPUS_MALLOC(sizeof(opus_real) * (n - 1));
 	spline_calc_diff(x_list, n - 1, h);
 
-	spline->a = (opus_real *) malloc(sizeof(opus_real) * n);
+	spline->a = (opus_real *) OPUS_MALLOC(sizeof(opus_real) * n);
 	memcpy(spline->a, y_list, sizeof(opus_real) * n);
 
-	A = (opus_real *) malloc(sizeof(opus_real) * n * n);
+	A = (opus_real *) OPUS_MALLOC(sizeof(opus_real) * n * n);
 	memset(A, 0, sizeof(opus_real) * n * n);
 
 	A__(0, 0) = 1.0;
@@ -134,20 +134,20 @@ void opus_spline_init(opus_spline_t *spline, opus_real *x_list, opus_real *y_lis
 	A__(n - 1, n - 2) = 0.f;
 	A__(n - 1, n - 1) = 1.f;
 
-	B = (opus_real *) malloc(sizeof(opus_real) * n);
+	B = (opus_real *) OPUS_MALLOC(sizeof(opus_real) * n);
 	memset(B, 0, sizeof(opus_real) * n);
 	for (i = 0; i < n - 2; i++)
 		B[i + 1] = 3.f * (y_list[i + 2] - y_list[i + 1]) / h[i + 1] - 3.0 * (y_list[i + 1] - y_list[i]) / h[i];
 
-	spline->c = (opus_real *) malloc(sizeof(opus_real) * n);
-	c         = (opus_real *) malloc(sizeof(opus_real) * n);
+	spline->c = (opus_real *) OPUS_MALLOC(sizeof(opus_real) * n);
+	c         = (opus_real *) OPUS_MALLOC(sizeof(opus_real) * n);
 	opus_linear_solve_qr((opus_real *) A, c, B, n, n);
 	for (i = 0; i < n; i++) {
 		spline->c[i] = c[i];
 	}
 
-	spline->b = (opus_real *) malloc(sizeof(opus_real) * (n - 1));
-	spline->d = (opus_real *) malloc(sizeof(opus_real) * (n - 1));
+	spline->b = (opus_real *) OPUS_MALLOC(sizeof(opus_real) * (n - 1));
+	spline->d = (opus_real *) OPUS_MALLOC(sizeof(opus_real) * (n - 1));
 	for (i = 0; i < n - 1; i++) {
 		opus_real tb;
 		spline->d[i] = (spline->c[i + 1] - spline->c[i]) / (3.0 * h[i]);
@@ -155,21 +155,21 @@ void opus_spline_init(opus_spline_t *spline, opus_real *x_list, opus_real *y_lis
 		spline->b[i] = tb;
 	}
 
-	free(h);
-	free(A);
-	free(B);
-	free(c);
+	OPUS_FREE(h);
+	OPUS_FREE(A);
+	OPUS_FREE(B);
+	OPUS_FREE(c);
 #undef A__
 }
 
 void opus_spline_done(opus_spline_t *spline)
 {
-	free(spline->a);
-	free(spline->x);
-	free(spline->y);
-	free(spline->c);
-	free(spline->b);
-	free(spline->d);
+	OPUS_FREE(spline->a);
+	OPUS_FREE(spline->x);
+	OPUS_FREE(spline->y);
+	OPUS_FREE(spline->c);
+	OPUS_FREE(spline->b);
+	OPUS_FREE(spline->d);
 }
 
 OPUS_INLINE size_t __spline_search_index(opus_spline_t *spline, opus_real t)
@@ -230,31 +230,31 @@ void opus_spline2d_init(opus_spline2d_t *spline, opus_real *x_list, opus_real *y
 	opus_real *dx, *dy;
 	spline->n = n;
 
-	dx = (opus_real *) malloc(sizeof(opus_real) * (n - 1));
-	dy = (opus_real *) malloc(sizeof(opus_real) * (n - 1));
+	dx = (opus_real *) OPUS_MALLOC(sizeof(opus_real) * (n - 1));
+	dy = (opus_real *) OPUS_MALLOC(sizeof(opus_real) * (n - 1));
 	spline_calc_diff(x_list, n - 1, dx);
 	spline_calc_diff(y_list, n - 1, dy);
 
-	spline->ds = (opus_real *) malloc(sizeof(opus_real) * (n - 1));
+	spline->ds = (opus_real *) OPUS_MALLOC(sizeof(opus_real) * (n - 1));
 	for (i = 0; i < n - 1; i++) spline->ds[i] = opus_hypot(dx[i], dy[i]);
 
-	spline->s    = (opus_real *) malloc(sizeof(opus_real) * n);
+	spline->s    = (opus_real *) OPUS_MALLOC(sizeof(opus_real) * n);
 	spline->s[0] = 0;
 	for (i = 0; i < n - 1; i++) spline->s[i + 1] = spline->ds[i] + spline->s[i];
 
 	opus_spline_init(&spline->sx, spline->s, x_list, n);
 	opus_spline_init(&spline->sy, spline->s, y_list, n);
 
-	free(dx);
-	free(dy);
+	OPUS_FREE(dx);
+	OPUS_FREE(dy);
 }
 
 void opus_spline2d_done(opus_spline2d_t *spline)
 {
 	opus_spline_done(&spline->sx);
 	opus_spline_done(&spline->sy);
-	free(spline->ds);
-	free(spline->s);
+	OPUS_FREE(spline->ds);
+	OPUS_FREE(spline->s);
 }
 
 void opus_spline2d_calc_position(opus_spline2d_t *spline, opus_real s, opus_vec2 *pos)

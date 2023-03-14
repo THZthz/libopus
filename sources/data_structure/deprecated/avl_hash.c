@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "data_structure/avl_hash.h"
+#include "avl_hash.h"
 
 void avl_hash_init(avl_hash_table_t *ht,
                    size_t (*hash)(const void *key),
@@ -325,7 +325,7 @@ void *avl_fastbin_new(struct avl_fastbin *fb)
 		return obj;
 	}
 	if (fb->start + obj_size > fb->endup) {
-		char  *page    = (char *) malloc(fb->page_size);
+		char  *page    = (char *) OPUS_MALLOC(fb->page_size);
 		size_t lineptr = (size_t) page;
 		TREE_ASSERTION(page);
 		AVL_NEXT(page) = fb->pages;

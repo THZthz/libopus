@@ -173,40 +173,58 @@ opus_clip_result VCLIP_polygon_circle_(opus_overlap_result overlap)
 {
 	opus_clip_result result = {0};
 
-	opus_polygon   *A;
-	opus_circle    *B;
-	opus_mat2d      ta, tb;
+	opus_polygon *A;
+	opus_circle  *B;
+	opus_mat2d    ta, tb;
 
-	opus_vec2 support, center, p;
+	opus_vec2 support_a, center, support_b, p1, p2;
+	opus_vec2 ref_s, ref_e;
+	opus_real r1, r2;
 	size_t    index_support;
 
-	/* exchange shape */
-	if (overlap.A->type_ == PHYSICS_SHAPE_CIRCLE) {
-		A = (void *) overlap.B;
-		opus_mat2d_copy(ta, overlap.transform_b);
-		B = (void *) overlap.A;
-		opus_mat2d_copy(tb, overlap.transform_a);
-		/* make the normal points to circle */
-		overlap.normal = opus_vec2_neg(overlap.normal);
+	OPUS_ASSERT(overlap.A->type_ == OPUS_SHAPE_POLYGON);
+	OPUS_ASSERT(overlap.B->type_ == OPUS_SHAPE_CIRCLE);
+
+	A = (void *) overlap.A;
+	opus_mat2d_copy(ta, overlap.transform_a);
+	B = (void *) overlap.B;
+	opus_mat2d_copy(tb, overlap.transform_b);
+
+	support_a = A->_.get_support((void *) A, ta, overlap.normal, &index_support);
+	support_a = opus_mat2d_pre_mul_vec(ta, support_a);
+
+	/* get support of the circle */
+	center    = opus_mat2d_pre_mul_vec(tb, opus_vec2_(0, 0)); /* real center of the circle */
+	support_b = opus_vec2_neg(overlap.normal);
+	support_b = opus_vec2_scale(support_b, B->radius);
+	support_b = opus_vec2_add(support_b, center);
+
+	/* get reference edge of the polygon */
+	p1 = A->vertices[(A->n + index_support - 1) % A->n]; /* prev */
+	p2 = A->vertices[(index_support + 1) % A->n];        /* next */
+	p1 = opus_mat2d_pre_mul_vec(ta, p1);
+	p2 = opus_mat2d_pre_mul_vec(ta, p2);
+	r1 = opus_vec2_dot(opus_vec2_to(p1, support_a), overlap.normal);
+	r2 = opus_vec2_dot(opus_vec2_to(p2, support_a), overlap.normal);
+	if (opus_abs(r1) < opus_abs(r2)) {
+		ref_s = p1;
+		ref_e = support_a;
 	} else {
-		A = (void *) overlap.A;
-		opus_mat2d_copy(ta, overlap.transform_a);
-		B = (void *) overlap.B;
-		opus_mat2d_copy(tb, overlap.transform_b);
+		ref_s = support_a;
+		ref_e = p2;
 	}
 
-	support = A->_.get_support((void *) A, ta, overlap.normal, &index_support);
-	support = opus_mat2d_pre_mul_vec(ta, support);
-	center  = opus_mat2d_pre_mul_vec(tb, opus_vec2_(0, 0)); /* real center of the circle */
-	p       = opus_vec2_neg(overlap.normal);
-	opus_vec2_set_length(&p, B->radius);
-	p = opus_vec2_add(p, center);
+	extern plutovg_t *pl;
+	opus_pl_line_vec(pl, ref_s, ref_e);
+	plutovg_set_source_rgb(pl, COLOR_RED);
+	plutovg_set_line_width(pl, 2);
+	plutovg_stroke(pl);
 
 	result.A              = (void *) A;
 	result.B              = (void *) B;
 	result.n_support      = 1;
-	result.supports[0][0] = support;
-	result.supports[0][1] = p;
+	result.supports[0][0] = opus_nearest_point_on_line(ref_s, ref_e, support_b);
+	result.supports[0][1] = support_b;
 
 	return result;
 }
@@ -218,16 +236,16 @@ opus_clip_result VCLIP_polygon_circle_(opus_overlap_result overlap)
  */
 opus_clip_result opus_VCLIP(opus_overlap_result overlap)
 {
-	opus_clip_result   r0 = {0};
-	opus_shape        *A = overlap.A, *B = overlap.B;
+	opus_clip_result r0 = {0};
+	opus_shape      *A = overlap.A, *B = overlap.B;
 
 	if (!overlap.is_overlap) return r0;
 
-	if (A->type_ == PHYSICS_SHAPE_POLYGON && B->type_ == A->type_)
+	if (A->type_ == OPUS_SHAPE_POLYGON && B->type_ == A->type_)
 		return VCLIP_polygon_polygon_(overlap);
-	if (A->type_ == PHYSICS_SHAPE_POLYGON && B->type_ == PHYSICS_SHAPE_CIRCLE)
+	if (A->type_ == OPUS_SHAPE_POLYGON && B->type_ == OPUS_SHAPE_CIRCLE)
 		return VCLIP_polygon_circle_(overlap);
-	if (A->type_ == PHYSICS_SHAPE_CIRCLE && B->type_ == PHYSICS_SHAPE_POLYGON)
+	if (A->type_ == OPUS_SHAPE_CIRCLE && B->type_ == OPUS_SHAPE_POLYGON)
 		return VCLIP_polygon_circle_(overlap);
 	return r0;
 }

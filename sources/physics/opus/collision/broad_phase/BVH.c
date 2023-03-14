@@ -42,7 +42,7 @@ static void opus_bvh_init(opus_bvh *bvh)
 	opus_arr_create(bvh->bodies, sizeof(opus_body));
 }
 
-opus_bvh *opus_bvh_create()
+opus_bvh *opus_bvh_create(void)
 {
 	opus_bvh *tree = (opus_bvh *) malloc(sizeof(opus_bvh));
 	opus_bvh_init(tree);
@@ -79,7 +79,7 @@ static void bvh_node_init(opus_bvh_leaf *node)
 	node->height  = 1;
 }
 
-static opus_bvh_leaf *bvh_node_create()
+static opus_bvh_leaf *bvh_node_create(void)
 {
 	opus_bvh_leaf *node = (opus_bvh_leaf *) malloc(sizeof(opus_bvh_leaf));
 	bvh_node_init(node);
@@ -229,7 +229,7 @@ static opus_bvh_leaf *opus_bvh_balance_tree(opus_bvh *bvh, opus_bvh_leaf *index_
 }
 
 /**
- * Dynamically insert a leaf into the BVH tree, will re-balance the tree for better traverse efficiency.
+ * Dynamically insert a leaf into the BVH tree, will re-balance the tree for better destroy_leaves_ efficiency.
  * This algorithm is originally from Box2D's dynamic tree by Erin Catto, I am really benefited a lot from this.
  * @param bvh the BVH tree (binary and AVL-conformed)
  * @param body the body you want to insert into the tree

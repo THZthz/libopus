@@ -1569,11 +1569,11 @@ editor.setOption("extraKeys", {
                         replace the previous event (if that had the same origin).
                         Built-in motion uses the <code>"+move"</code> origin. User input uses the <code>"+input"</code> origin.
                     </dd>
-                    <dt id="selection_bias"><code><strong>velocity_bias</strong>: number</code></dt>
+                    <dt id="selection_bias"><code><strong>restitution_bias</strong>: number</code></dt>
                     <dd>Determine the direction into which the selection endpoints
                         should be adjusted when they fall inside
                         an <a href="#mark_atomic">atomic</a> range. Can be either -1
-                        (backward) or 1 (forward). When not given, the velocity_bias will be
+                        (backward) or 1 (forward). When not given, the restitution_bias will be
                         based on the relative position of the old selection—the editor
                         will try to move further away from that, to prevent getting
                         stuck.

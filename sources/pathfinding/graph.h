@@ -180,7 +180,7 @@ graph_t *grid_create(int is_static, ...)
 
 	if (!is_static) return NULL; /* no support for dynamic adjacency list for now */
 
-	graph = (graph_t *) malloc(sizeof(graph_t));
+	graph = (graph_t *) OPUS_MALLOC(sizeof(graph_t));
 	if (graph) {
 		graph_count_t max_vertex, max_arc;
 
@@ -197,7 +197,7 @@ graph_t *grid_create(int is_static, ...)
 
 		/* create context */
 		if (graph->create_context_(graph, args)) {
-			free(graph);
+			OPUS_FREE(graph);
 			return NULL;
 		}
 	}

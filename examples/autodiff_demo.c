@@ -24,7 +24,7 @@
 	} while (0)
 #define AD_CALLOC_(_v, _n, _ele_size)           \
 	do {                            \
-		(_v) = (void *) calloc((_n), (_ele_size)); \
+		(_v) = (void *) OPUS_CALLOC((_n), (_ele_size)); \
 	} while (0)
 #define AD_FREE_(_v) \
 	do {                \

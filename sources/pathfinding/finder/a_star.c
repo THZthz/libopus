@@ -251,7 +251,7 @@ static graph_status_t get_path(pathfinder_t *finder, graph_id_t **res_path, grap
 
 		if (*res_count == capacity) {
 			capacity *= 2;
-			*res_path = (graph_id_t *) realloc(*res_path, capacity * sizeof(graph_id_t));
+			*res_path = (graph_id_t *) OPUS_REALLOC(*res_path, capacity * sizeof(graph_id_t));
 			if (!(*res_path)) return GRAPH_NO_MEM;
 		}
 		(*res_path)[(*res_count)++] = p_id;

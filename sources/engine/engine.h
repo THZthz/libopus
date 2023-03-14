@@ -10,8 +10,8 @@
  * 		"vg_t", you should create "vg_gl_program_t" to render it using openGL.
  *
  */
-#ifndef VG_ENGINE_H
-#define VG_ENGINE_H
+#ifndef ENGINE_H
+#define ENGINE_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -22,14 +22,14 @@ extern "C" {
 #include "external/glad/glad.h"
 #include "external/GLFW/glfw3.h"
 
-typedef struct vg_engine vg_engine_t;
-typedef void (*vg_engine_preload_cb)(vg_engine_t *);
-typedef void (*vg_engine_render_cb)(vg_engine_t *);
-typedef void (*vg_engine_update_cb)(vg_engine_t *, opus_real);
-typedef void (*vg_engine_cleanup_cb)(vg_engine_t *);
+typedef struct opus_engine opus_engine;
+typedef void (*opus_engine_preload_cb)(opus_engine *);
+typedef void (*opus_engine_render_cb)(opus_engine *);
+typedef void (*opus_engine_update_cb)(opus_engine *, opus_real);
+typedef void (*opus_engine_cleanup_cb)(opus_engine *);
 
 
-struct vg_engine {
+struct opus_engine {
 	int      width, height; /* size of the main GLFW window */
 	char    *title;         /* title of the main GLFW window */
 	opus_vg *vg;            /* vector graphics context bind to this engine, automatically created */
@@ -41,10 +41,10 @@ struct vg_engine {
 	/* context of this vector graphics engine */
 	void *context_;
 
-	vg_engine_preload_cb preload_;
-	vg_engine_render_cb  render_;
-	vg_engine_update_cb  update_;
-	vg_engine_cleanup_cb cleanup_;
+	opus_engine_preload_cb preload_;
+	opus_engine_render_cb  render_;
+	opus_engine_update_cb  update_;
+	opus_engine_cleanup_cb cleanup_;
 
 	/* measurement */
 	unsigned  frame_count;
@@ -52,21 +52,22 @@ struct vg_engine {
 	opus_real fps;
 };
 
-vg_engine_t *vg_engine_create(int width, int height, const char *title);
-void         vg_engine_destroy(vg_engine_t *engine);
+opus_engine *opus_engine_create(int width, int height, const char *title);
+void         opus_engine_destroy(opus_engine *engine);
 
-void vg_engine_set(vg_engine_t         *engine,
-                   vg_engine_preload_cb preload,
-                   vg_engine_update_cb  update,
-                   vg_engine_render_cb  render,
-                   vg_engine_cleanup_cb cleanup);
+void opus_engine_set_callback(opus_engine           *engine,
+                              opus_engine_preload_cb preload,
+                              opus_engine_update_cb  update,
+                              opus_engine_render_cb  render,
+                              opus_engine_cleanup_cb cleanup);
 
-opus_real vg_engine_get_time();
-void      vg_engine_start(vg_engine_t *engine);
-void      vg_engine_stop(vg_engine_t *engine);
+opus_real opus_engine_get_time(void);
+void      opus_engine_start(opus_engine *engine);
+void      opus_engine_stop(opus_engine *engine);
+void      opus_engine_end(opus_engine *engine);
 
 #ifdef __cplusplus
 };
 #endif /* __cplusplus */
 
-#endif /* VG_ENGINE_H */
+#endif /* ENGINE_H */

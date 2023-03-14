@@ -50,7 +50,7 @@ void vg_gl_read(const char *file_path, char **str)
 	file_size = ftell(fp);
 	rewind(fp);
 
-	*str = (char *) calloc(file_size + 1, sizeof(char));
+	*str = (char *) OPUS_CALLOC(file_size + 1, sizeof(char));
 	if (!*str) {
 		OPUS_ERROR("read_file_into_string: FAILED_TO_ALLOCATE_MEMORY: %s", file_path);
 		return;
@@ -152,11 +152,11 @@ GLuint vg_gl_create_program_v(const char *vertex_shader_path, const char *fragme
 	return program;
 }
 
-vg_gl_program_t *vg_gl_program_create(vg_gl_program_init_cb init, vg_gl_program_use_cb use, vg_gl_program_done_cb done)
+opus_gl_program *vg_gl_program_create(opus_gl_program_init_cb init, opus_gl_program_use_cb use, opus_gl_program_done_cb done)
 {
-	vg_gl_program_t *program;
+	opus_gl_program *program;
 
-	program = (vg_gl_program_t *) malloc(sizeof(vg_gl_program_t));
+	program = (opus_gl_program *) malloc(sizeof(opus_gl_program));
 	OPUS_RETURN_IF(NULL, !program);
 
 	program->program = -1;
@@ -172,30 +172,29 @@ vg_gl_program_t *vg_gl_program_create(vg_gl_program_init_cb init, vg_gl_program_
 	return program;
 }
 
-void vg_gl_program_destroy(vg_gl_program_t *program)
+void vg_gl_program_destroy(opus_gl_program *program)
 {
 	if (program->done) program->done(program);
 	free(program);
 }
 
-void preset1_init(vg_gl_program_t *program)
+void preset1_init(opus_gl_program *program)
 {
 	const char *vertex =
-	        "#version 330 core\n"
-	        "layout (location = 0) in vec2 pos;\n"
+	        /*"#version 330 core\n"*/
+	        "attribute vec2 pos;\n"
 	        "void main()\n"
 	        "{\n"
-	        "   gl_Position = vec4(pos.x / 400 - 1, -pos.y / 400 + 1, 0.0, 1.0);\n"
+	        "   gl_Position = vec4(pos.x / 400.0 - 1.0, -pos.y / 400.0 + 1.0, 0.0, 1.0);\n"
 	        "}\0";
 
 	const char *fragment =
-	        "#version 330 core\n"
-	        "in vec2 fpos;"
-	        "out vec4 FragColor;\n"
+	        /*"#version 330 core\n"*/
+	        "precision mediump float;\n"
 	        "uniform vec4 color;\n"
 	        "void main()\n"
 	        "{\n"
-	        "   FragColor = color;\n"
+	        "   gl_FragColor = color;\n"
 	        "}\n\0";
 
 	program->program = vg_gl_create_program(vertex, fragment);
@@ -205,14 +204,14 @@ void preset1_init(vg_gl_program_t *program)
 	glBindVertexArray(program->vao);
 	glBindBuffer(GL_ARRAY_BUFFER, program->vbo);
 
-	glVertexAttribPointer(0, 2, GL_DOUBLE, GL_FALSE, 2 * sizeof(double), (void *) 0);
+	glVertexAttribPointer(glGetAttribLocation(program->program, "pos"), 2, GL_DOUBLE, GL_FALSE, 2 * sizeof(double), (void *) 0);
 	glEnableVertexAttribArray(0);
 
 	glBindVertexArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-void preset1_done(vg_gl_program_t *program)
+void preset1_done(opus_gl_program *program)
 {
 	glDeleteVertexArrays(1, &program->vao);
 	glDeleteBuffers(1, &program->vbo);
@@ -223,7 +222,7 @@ void preset1_done(vg_gl_program_t *program)
  * ARGS: vg_gl_program_t *program, GLenum mode, double *path, size_t n, double r, double g, double b, double a \n
  * NOTE: "n" is the number of double values in the path
  */
-void preset1_use(vg_gl_program_t *program, ...)
+void preset1_use(opus_gl_program *program, ...)
 {
 	va_list args;
 	GLenum  mode;
@@ -257,7 +256,7 @@ void preset1_use(vg_gl_program_t *program, ...)
  * 		arguments of "use": vg_gl_program_t *program, GLenum mode, double *path, size_t n, double r, double g, double b, double a
  * @return
  */
-vg_gl_program_t *vg_gl_program_preset1()
+opus_gl_program *vg_gl_program_preset1(void)
 {
 	return vg_gl_program_create(preset1_init, preset1_use, preset1_done);
 }
@@ -270,7 +269,7 @@ struct context2 {
 	int width, height;
 };
 
-void preset2_init(vg_gl_program_t *program)
+void preset2_init(opus_gl_program *program)
 {
 	/* Shaders */
 	/* FIXME: compatibility issue? I am tired of this. */
@@ -392,7 +391,7 @@ void preset2_init(vg_gl_program_t *program)
 /**
  * ARGS: vg_gl_program_t *program, unsigned char *data, int width, int height
  */
-void preset2_use(vg_gl_program_t *program, ...)
+void preset2_use(opus_gl_program *program, ...)
 {
 	struct context2 *context = program->context_;
 
@@ -450,7 +449,7 @@ void preset2_use(vg_gl_program_t *program, ...)
 	}
 }
 
-void preset2_done(vg_gl_program_t *program)
+void preset2_done(opus_gl_program *program)
 {
 	struct context2 *context = program->context_;
 	OPUS_RETURN_IF(, !context);
@@ -470,7 +469,7 @@ void preset2_done(vg_gl_program_t *program)
  * 		ARGS: vg_gl_program_t *program, unsigned char *data, int width, int height
  * @return
  */
-vg_gl_program_t *vg_gl_program_preset2()
+opus_gl_program *vg_gl_program_preset2(void)
 {
 	return vg_gl_program_create(preset2_init, preset2_use, preset2_done);
 }
@@ -480,7 +479,7 @@ vg_gl_program_t *vg_gl_program_preset2()
  * 		The detail of this method can be found at http://glprogramming.com/red/chapter14.html#name13 (nice!)
  * @param program preset1, use it! That's why this function have "_p1_"
  */
-void vg_gl_p1_render_fill(vg_gl_program_t *program, opus_vg *vg, double r, double g, double b, double a)
+void vg_gl_p1_render_fill(opus_gl_program *program, opus_vg *vg, double r, double g, double b, double a)
 {
 	size_t j;
 
@@ -517,7 +516,7 @@ void vg_gl_p1_render_fill(vg_gl_program_t *program, opus_vg *vg, double r, doubl
  * @brief Use preset1 vg_gl_program to render stroke
  * @param program a preset1 vg_gl_program
  */
-void vg_gl_p1_render_stroke(vg_gl_program_t *program, opus_vg *vg, double r, double g, double b, double a)
+void vg_gl_p1_render_stroke(opus_gl_program *program, opus_vg *vg, double r, double g, double b, double a)
 {
 	size_t i;
 
@@ -563,9 +562,9 @@ void vg_gl_p1_render_stroke(vg_gl_program_t *program, opus_vg *vg, double r, dou
 	/* program->use(program, GL_TRIANGLE_STRIP, path->stroke, path->n_stroke * 2, r, g, b, a); */
 }
 
-vg_gl_font_t *vg_gl_font_create(const char *font_file_path)
+opus_font *vg_gl_font_create(const char *font_file_path)
 {
-	vg_gl_font_t *font = (vg_gl_font_t *) malloc(sizeof(vg_gl_font_t));
+	opus_font *font = (opus_font *) malloc(sizeof(opus_font));
 
 	OPUS_RETURN_IF(NULL, !font);
 
@@ -588,7 +587,7 @@ vg_gl_font_t *vg_gl_font_create(const char *font_file_path)
 	return font;
 }
 
-void vg_gl_font_set_size(vg_gl_font_t *font, float size)
+void vg_gl_font_set_size(opus_font *font, float size)
 {
 	font->size      = size;
 	font->scale     = stbtt_ScaleForPixelHeight(&font->info, font->size);
@@ -598,7 +597,7 @@ void vg_gl_font_set_size(vg_gl_font_t *font, float size)
 	font->line_gap  = (int) ((float) font->line_gap * font->scale);
 }
 
-void vg_gl_font_destroy(vg_gl_font_t *font)
+void vg_gl_font_destroy(opus_font *font)
 {
 	if (font) {
 		free(font->font_file);
@@ -607,7 +606,7 @@ void vg_gl_font_destroy(vg_gl_font_t *font)
 }
 
 /* set 0 to leave the right to program(unlimited width and height) */
-void vg_gl_font_set_bound(vg_gl_font_t *font, opus_real w, opus_real h)
+void vg_gl_font_set_bound(opus_font *font, opus_real w, opus_real h)
 {
 	font->w = w;
 	font->h = h;
@@ -619,12 +618,12 @@ void vg_gl_font_set_bound(vg_gl_font_t *font, opus_real w, opus_real h)
  * @param font
  * @param ratio
  */
-void vg_gl_font_set_line_space(vg_gl_font_t *font, opus_real ratio)
+void vg_gl_font_set_line_space(opus_font *font, opus_real ratio)
 {
 	font->line_space = ratio;
 }
 
-void vg_gl_font_fill(vg_gl_font_t *font, opus_vg *vg, vg_gl_program_t *program)
+void vg_gl_font_fill(opus_font *font, opus_vg *vg, opus_gl_program *program)
 {
 	/* because we apply global transform on the path of the text glyph */
 	/* we need to compensate for it */
@@ -635,7 +634,7 @@ void vg_gl_font_fill(vg_gl_font_t *font, opus_vg *vg, vg_gl_program_t *program)
 	vg_gl_p1_render_fill(program, vg, COLOR_BLACK, 1);
 }
 
-void vg_gl_font_measure_text(vg_gl_font_t *font, const char *words, size_t n, opus_real *ex_x,
+void vg_gl_font_measure_text(opus_font *font, const char *words, size_t n, opus_real *ex_x,
                              opus_real *ex_y)
 {
 #define MOVE_TO_NEXT_LINE()                 \
@@ -710,7 +709,7 @@ void vg_gl_font_measure_text(vg_gl_font_t *font, const char *words, size_t n, op
  * @param x
  * @param y
  */
-void vg_gl_font_generate_path(vg_gl_font_t *font, opus_vg *vg, const char *words, size_t n,
+void vg_gl_font_generate_path(opus_font *font, opus_vg *vg, const char *words, size_t n,
                               opus_real x, opus_real y)
 {
 #define MOVE_TO_NEXT_LINE()                 \
